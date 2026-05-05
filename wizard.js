@@ -2,6 +2,14 @@
    CAMPAIGN WIZARD — SHARED JAVASCRIPT
    ============================================================ */
 
+/* ── API key helpers ── */
+const ApiKey = {
+  _key: 'cw_api_key',
+  get()  { return localStorage.getItem(this._key) || ''; },
+  set(v) { localStorage.setItem(this._key, v.trim()); },
+  has()  { return !!this.get(); }
+};
+
 /* ── Storage helpers ── */
 const Store = {
   prefix: 'cw_',
@@ -109,9 +117,16 @@ const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
 
 /* Low-level API call — returns parsed JSON or throws */
 async function callClaude(systemPrompt, userMessage) {
+  const key = ApiKey.get();
+  if (!key) throw new Error('NO_API_KEY');
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
     body: JSON.stringify({
       model: CLAUDE_MODEL,
       max_tokens: 1000,
@@ -271,7 +286,9 @@ function initAiPanel(stageName, fieldIds, checkGroups) {
         setTimeout(() => el.classList.remove('ai-updated'), 1200);
       });
     } catch(e) {
-      error.textContent = 'AI update failed — check your connection and try again.';
+      error.textContent = e.message === 'NO_API_KEY'
+        ? 'No API key — click ⚙ to add your Anthropic key.'
+        : 'AI update failed — check your connection and try again.';
       console.error(e);
     } finally {
       btn.disabled          = false;
@@ -294,6 +311,14 @@ function initIndexAi() {
   const panel   = document.getElementById('ai-prefill-panel');
 
   if (!btn) return;
+
+  // On index: auto-open settings on first visit if no key is saved
+  if (!ApiKey.has()) {
+    setTimeout(() => {
+      const overlay = document.querySelector('.settings-overlay');
+      if (overlay) overlay.classList.add('show');
+    }, 500);
+  }
 
   btn.addEventListener('click', async () => {
     const description = input.value.trim();
@@ -329,7 +354,9 @@ function initIndexAi() {
         </div>`;
 
     } catch(e) {
-      error.textContent = 'Something went wrong — try again or fill manually.';
+      error.textContent = e.message === 'NO_API_KEY'
+        ? 'No API key — click ⚙ (bottom right) to add your Anthropic key.'
+        : 'Something went wrong — try again or fill manually.';
       console.error(e);
     } finally {
       btn.disabled          = false;
@@ -496,3 +523,67 @@ function initResetModal() {
   document.querySelector('[data-action="confirm-reset"]')
     ?.addEventListener('click', () => { Store.clearAll(); window.location.href = 'index.html'; });
 }
+
+/* ── Settings UI (gear button + modal, injected on every page) ── */
+function initSettingsUI() {
+  // Gear button
+  const btn = document.createElement('button');
+  btn.className = 'settings-btn' + (ApiKey.has() ? ' key-set' : '');
+  btn.title = 'API Settings';
+  btn.setAttribute('aria-label', 'API Settings');
+  btn.textContent = '⚙';
+  document.body.appendChild(btn);
+
+  // Modal overlay
+  const overlay = document.createElement('div');
+  overlay.className = 'settings-overlay';
+  overlay.innerHTML = `
+    <div class="settings-box">
+      <h3>API Settings</h3>
+      <p>Enter your <a href="https://console.anthropic.com/" target="_blank" rel="noopener">Anthropic API key</a> to enable AI features. Your key is saved only in this browser — it is never sent anywhere except directly to Anthropic.</p>
+      <label class="field-label" for="settings-api-key">Anthropic API Key</label>
+      <input type="password" id="settings-api-key" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+      <div class="settings-actions">
+        <button class="btn btn-ghost" id="settings-cancel">Cancel</button>
+        <button class="btn btn-primary" id="settings-save">Save Key</button>
+      </div>
+      <div class="settings-status" id="settings-status"></div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const input  = overlay.querySelector('#settings-api-key');
+  const status = overlay.querySelector('#settings-status');
+
+  function openSettings() {
+    input.value = ApiKey.get();
+    status.textContent = '';
+    overlay.classList.add('show');
+    setTimeout(() => input.focus(), 50);
+  }
+
+  btn.addEventListener('click', openSettings);
+
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('show');
+  });
+
+  overlay.querySelector('#settings-cancel').addEventListener('click', () => {
+    overlay.classList.remove('show');
+  });
+
+  overlay.querySelector('#settings-save').addEventListener('click', () => {
+    const val = input.value.trim();
+    if (!val) { status.textContent = 'Please enter a key.'; return; }
+    ApiKey.set(val);
+    btn.classList.add('key-set');
+    status.textContent = '✓ Key saved.';
+    setTimeout(() => overlay.classList.remove('show'), 900);
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') overlay.querySelector('#settings-save').click();
+    if (e.key === 'Escape') overlay.classList.remove('show');
+  });
+}
+
+initSettingsUI();
