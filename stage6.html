@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage 6 — Reporting &amp; Iteration</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>:root { --stage-color: var(--c6); }</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <nav class="progress-nav">
+    <a href="stage1.html"><div class="prog-dot">1</div><span class="prog-label">Strategy</span></a>
+    <a href="stage2.html"><div class="prog-dot">2</div><span class="prog-label">Creative</span></a>
+    <a href="stage3.html"><div class="prog-dot">3</div><span class="prog-label">Pre-Launch</span></a>
+    <a href="stage4.html"><div class="prog-dot">4</div><span class="prog-label">Launch</span></a>
+    <a href="stage5.html"><div class="prog-dot">5</div><span class="prog-label">Optimize</span></a>
+    <a href="stage6.html"><div class="prog-dot">6</div><span class="prog-label">Reporting</span></a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">Stage 06 — Reporting &amp; Iteration</p>
+    <h1>Close the loop. <em>Compound the learning.</em></h1>
+    <p class="subtitle">Campaigns that don't generate structured learnings just repeat themselves. Define how you'll measure, who gets the results, and how insights feed into the next cycle.</p>
+  </header>
+
+  <!-- AI Refine Panel -->
+  <div class="ai-stage-wrap">
+    <button class="ai-panel-toggle" id="ai-panel-toggle">AI Assistant ✦</button>
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-panel-inner">
+        <p>Ask AI to write your success definition, suggest a reporting structure, or build out your learnings template. Try: "Write a success definition based on our 300 lead goal and $100 CPL target" or "Suggest a learnings template for a B2B demand gen campaign."</p>
+        <div class="ai-input-row">
+          <textarea id="ai-refine-input" placeholder="e.g. We report to a VP of Marketing who wants a weekly one-pager with only headline KPIs. Write a report recipients plan and suggest the right dashboard tool…"></textarea>
+          <button class="btn btn-ai" id="ai-refine-btn">✦ Update</button>
+        </div>
+        <div class="ai-spinner" id="ai-refine-spinner">✦ Updating fields…</div>
+        <div class="ai-error" id="ai-refine-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+
+    <div class="field-group">
+      <label class="field-label">Reporting Cadence</label>
+      <p class="field-hint">How often will formal performance reports be produced and shared?</p>
+      <div class="pill-group">
+        <div class="pill"><input type="checkbox" id="rep_daily"    value="Daily performance snapshot"><label for="rep_daily">Daily snapshot</label></div>
+        <div class="pill"><input type="checkbox" id="rep_weekly"   value="Weekly report"><label for="rep_weekly">Weekly report</label></div>
+        <div class="pill"><input type="checkbox" id="rep_biweekly" value="Bi-weekly executive summary"><label for="rep_biweekly">Bi-weekly exec summary</label></div>
+        <div class="pill"><input type="checkbox" id="rep_midpoint" value="Mid-campaign review"><label for="rep_midpoint">Mid-campaign review</label></div>
+        <div class="pill"><input type="checkbox" id="rep_final"    value="Final campaign report"><label for="rep_final">Final campaign report</label></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="report_recipients">Report Recipients</label>
+      <p class="field-hint">Who receives the reports, and at what level of detail?</p>
+      <textarea id="report_recipients" placeholder="e.g. CMO: weekly headline KPIs only. Marketing team: full weekly report with channel breakdown. CEO: monthly one-pager with revenue impact. Agency: raw data access via shared dashboard."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="dashboard_tool">Reporting Dashboard / Tool</label>
+      <p class="field-hint">Where will live campaign data be tracked and visualized?</p>
+      <select id="dashboard_tool">
+        <option value="">Select primary dashboard…</option>
+        <option>Google Looker Studio</option>
+        <option>HubSpot Reporting</option>
+        <option>Salesforce Reports</option>
+        <option>Tableau</option>
+        <option>Power BI</option>
+        <option>Custom Spreadsheet (Google Sheets / Excel)</option>
+        <option>Native platform dashboards (Meta, Google Ads, etc.)</option>
+        <option>Databox</option>
+        <option>Triple Whale</option>
+        <option>Other / TBD</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="success_def">Success Definition</label>
+      <p class="field-hint">In plain language, what does a successful campaign look like when it's over?</p>
+      <textarea id="success_def" placeholder="e.g. The campaign is a success if it generates $500K in pipeline, validates that LinkedIn outperforms Meta for our ICP, and gives us a repeatable paid playbook we can scale 3× next quarter."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="attribution_model">Attribution Model</label>
+      <p class="field-hint">How will you attribute conversions and revenue to this campaign?</p>
+      <select id="attribution_model">
+        <option value="">Select attribution approach…</option>
+        <option>Last-touch attribution</option>
+        <option>First-touch attribution</option>
+        <option>Linear (equal credit across all touches)</option>
+        <option>Time-decay (more credit to recent touches)</option>
+        <option>Position-based / U-shaped (first + last touch weighted)</option>
+        <option>Data-driven / algorithmic (GA4 or platform model)</option>
+        <option>Multi-touch custom model</option>
+        <option>Single channel — no attribution needed</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="roi_method">ROI Calculation Method</label>
+      <p class="field-hint">How will you calculate and present return on investment?</p>
+      <textarea id="roi_method" placeholder="e.g. ROI = (Revenue attributed − Total campaign cost) / Total campaign cost. We'll attribute revenue using CRM opportunity data with a 30-day conversion window."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="retro_format">Post-Campaign Review Format</label>
+      <p class="field-hint">How will you structure the end-of-campaign retrospective?</p>
+      <select id="retro_format">
+        <option value="">Select format…</option>
+        <option>Internal slide deck (Google Slides / PowerPoint)</option>
+        <option>Written brief / document (Notion, Google Doc)</option>
+        <option>Team retrospective meeting with action items</option>
+        <option>Shared dashboard with annotations</option>
+        <option>All of the above</option>
+        <option>We don't have a formal process yet</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="strategic_questions">Key Questions This Campaign Should Answer</label>
+      <p class="field-hint">What strategic or tactical questions are you hoping this campaign helps answer?</p>
+      <textarea id="strategic_questions" placeholder="e.g. 1. Does our ICP respond better to ROI or pain-point messaging? 2. Is LinkedIn worth the premium CPL vs. Meta? 3. Does free trial convert better than demo request?"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="learnings_template">Learnings Template</label>
+      <p class="field-hint">What structure will you use to capture learnings so they're actually used next time?</p>
+      <textarea id="learnings_template" placeholder="e.g. What worked well (top 3). What didn't work (top 3). Biggest surprise. One thing we'd do differently. Recommendations for next campaign. Benchmarks to carry forward."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="next_cycle">Next Campaign Planning Trigger</label>
+      <p class="field-hint">When and how will learnings from this campaign officially feed into the next one?</p>
+      <textarea id="next_cycle" placeholder="e.g. Post-campaign retro scheduled 2 weeks after end. Learnings doc shared in next campaign kick-off brief. Benchmarks added to shared KPI tracker."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="asset_archive">Asset Archive Plan</label>
+      <p class="field-hint">How will campaign assets be stored and tagged for future reuse?</p>
+      <textarea id="asset_archive" placeholder="e.g. All final assets uploaded to shared Drive. Naming: [Campaign]-[Channel]-[Format]-[Variant]-[Date]. Top performers tagged 'star'. Losing variants kept but labeled."></textarea>
+    </div>
+
+  </div>
+
+  <div class="nav-buttons">
+    <a href="stage5.html" class="btn btn-ghost">← Optimization</a>
+    <span class="save-indicator" id="saved-msg">✓ Saved</span>
+    <a href="brief.html" class="btn btn-generate">Generate Campaign Brief →</a>
+  </div>
+
+</div>
+<script src="wizard.js"></script>
+<script>
+  const STAGE  = 'stage6';
+  const FIELDS = ['report_recipients','dashboard_tool','success_def','attribution_model','roi_method','retro_format','strategic_questions','learnings_template','next_cycle','asset_archive'];
+  const CHECKS = { reporting: ['rep_daily','rep_weekly','rep_biweekly','rep_midpoint','rep_final'] };
+  initStage({ stageName: STAGE, navIndex: 5, fieldIds: FIELDS, checkGroups: CHECKS });
+  initAiPanel(STAGE, FIELDS, CHECKS);
+</script>
+</body>
+</html>

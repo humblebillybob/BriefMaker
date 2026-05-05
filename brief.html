@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Brief</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+  <!-- Sticky top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="index.html" class="back-link">← Overview</a>
+      <span class="topbar-title">Campaign Brief</span>
+    </div>
+    <div class="topbar-actions brief-actions">
+      <button class="btn btn-sm btn-gdocs" id="gdocs-btn">Open in Google Docs</button>
+      <button class="btn btn-sm btn-print" onclick="window.print()">Print / Save PDF</button>
+      <button class="btn btn-sm btn-danger" data-action="open-reset">Reset All Data</button>
+    </div>
+  </div>
+
+  <!-- Brief content injected by wizard.js -->
+  <div id="brief-root"></div>
+
+  <!-- Reset confirmation modal -->
+  <div class="reset-overlay">
+    <div class="reset-box">
+      <h3>Reset campaign data?</h3>
+      <p>This will permanently clear all answers from all six stages and cannot be undone.</p>
+      <div class="reset-actions">
+        <button class="btn btn-ghost" data-action="cancel-reset">Cancel</button>
+        <button class="btn btn-danger" data-action="confirm-reset">Yes, Reset Everything</button>
+      </div>
+    </div>
+  </div>
+
+<script src="wizard.js"></script>
+<script>
+
+  function buildBrief() {
+    const s1 = Store.load('stage1');
+    const s2 = Store.load('stage2');
+    const s3 = Store.load('stage3');
+    const s4 = Store.load('stage4');
+    const s5 = Store.load('stage5');
+    const s6 = Store.load('stage6');
+
+    const hasData = Object.keys(s1).length + Object.keys(s2).length > 0;
+
+    if (!hasData) {
+      document.getElementById('brief-root').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <div class="empty-title">No campaign data yet.</div>
+          <div class="empty-desc">Complete at least one stage of the wizard to generate your brief.</div>
+          <a href="stage1.html" class="btn btn-primary" style="display:inline-flex;">Begin Stage 1 →</a>
+        </div>`;
+      return;
+    }
+
+    const generated  = new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+    const name       = s1.campaign_name || 'Untitled Campaign';
+    const splitVal   = s1.budget_split  || '70';
+    const splitLabel = splitVal + '% Media / ' + (100 - parseInt(splitVal)) + '% Production';
+
+    const coverMeta = [
+      s1.campaign_objective ? `<div class="brief-meta-item"><strong>Objective:</strong> ${escHtml(s1.campaign_objective)}</div>` : '',
+      s1.budget             ? `<div class="brief-meta-item"><strong>Budget:</strong> ${escHtml(s1.budget)}</div>` : '',
+      (s1.start_date && s1.end_date) ? `<div class="brief-meta-item"><strong>Dates:</strong> ${escHtml(s1.start_date)} → ${escHtml(s1.end_date)}</div>` : '',
+      s4.launch_date        ? `<div class="brief-meta-item"><strong>Launch:</strong> ${escHtml(s4.launch_date)}</div>` : '',
+    ].join('');
+
+    const sections = [
+
+      briefSection('01','var(--c1)','Strategy &amp; <em>Planning</em>',`
+        ${briefField('Campaign Objective', s1.campaign_objective)}
+        ${briefField('Objective Detail',   s1.objective_detail)}
+        ${briefField('Target Audience',    s1.target_audience)}
+        ${briefRow(briefField('Audience Size', s1.audience_size), briefField('Total Budget', s1.budget))}
+        ${briefRow(briefField('Budget Split', splitLabel), briefField('Campaign Dates', (s1.start_date && s1.end_date) ? s1.start_date + ' → ' + s1.end_date : ''))}
+        ${briefPills('Channel Mix',  s1.channels)}
+        ${briefPills('Primary KPIs', s1.kpis)}
+        ${briefField('KPI Targets',         s1.kpi_targets)}
+        ${briefField('Competitors to Watch',s1.competitors)}
+      `, 0.15),
+
+      briefSection('02','var(--c2)','Creative <em>Development</em>',`
+        ${briefField('Core Campaign Message', s2.core_message)}
+        ${briefField('Value Proposition',     s2.value_prop)}
+        ${briefField('Pain Points Addressed', s2.pain_points)}
+        ${briefPills('Tone of Voice',         s2.tone)}
+        ${briefField('Headline Directions',   s2.headlines)}
+        ${briefRow(
+          briefField('Primary CTA',   s2.cta_text  ? s2.cta_text  + (s2.cta_url  ? ' — ' + s2.cta_url  : '') : ''),
+          briefField('Secondary CTA', s2.cta2_text ? s2.cta2_text + (s2.cta2_url ? ' — ' + s2.cta2_url : '') : '')
+        )}
+        ${briefPills('Assets to Produce',           s2.assets)}
+        ${briefField('Visual Style Direction',       s2.visual_style)}
+        ${briefField('Content Restrictions',         s2.restrictions)}
+      `, 0.25),
+
+      briefSection('03','var(--c3)','<em>Pre-Launch</em> Setup',`
+        ${briefPills('Tracking Stack',       s3.tracking)}
+        ${briefField('Conversion Events',    s3.conversion_events)}
+        ${briefRow(briefField('UTM Source Format', s3.utm_source), briefField('UTM Medium Format', s3.utm_medium))}
+        ${briefField('UTM Campaign Naming',  s3.utm_campaign)}
+        ${briefPills('QA Checklist Areas',   s3.qa)}
+        ${briefField('Stakeholder Briefing Plan', s3.stakeholder_plan)}
+        ${briefField('Warm-Up Strategy',         s3.warmup_type)}
+        ${briefField('Warm-Up Details',          s3.warmup_details)}
+        ${briefField('Go / No-Go Criteria',      s3.go_nogo)}
+      `, 0.35),
+
+      briefSection('04','var(--c4)','Launch &amp; <em>Activation</em>',`
+        ${briefRow(briefField('Launch Date', s4.launch_date), briefField('Launch Time', s4.launch_time))}
+        ${briefField('Channel Activation Order',       s4.channel_order)}
+        ${briefField('Paid Media Plan',                s4.paid_plan)}
+        ${briefField('Organic Content Plan',           s4.organic_plan)}
+        ${briefField('Email Launch Sequence',          s4.email_plan)}
+        ${briefField('PR &amp; Earned Media Plan',     s4.pr_plan)}
+        ${briefField('Team &amp; Channel Owners',      s4.team_owners)}
+        ${briefField('Monitoring Plan (First 72 hrs)', s4.monitoring_plan)}
+        ${briefField('Early Signal Thresholds',        s4.early_signals)}
+        ${briefField('Escalation Path',                s4.escalation)}
+      `, 0.45),
+
+      briefSection('05','var(--c5)','<em>Optimization</em> Framework',`
+        ${briefField('Optimization Cadence',               s5.opt_cadence)}
+        ${briefField('A/B Testing — Creative',             s5.ab_creative)}
+        ${briefField('A/B Testing — Copy &amp; Messaging', s5.ab_copy)}
+        ${briefField('A/B Testing — Audience',             s5.ab_audience)}
+        ${briefField('Statistical Significance',           s5.stat_sig)}
+        ${briefField('Budget Reallocation Rules',          s5.budget_rules)}
+        ${briefField('Kill Criteria',                      s5.kill_criteria)}
+        ${briefField('Scale Criteria',                     s5.scale_criteria)}
+        ${briefField('Landing Page Optimization',          s5.lp_optimization)}
+        ${briefField('Audience Refinement Plan',           s5.audience_refinement)}
+      `, 0.55),
+
+      briefSection('06','var(--c6)','Reporting &amp; <em>Iteration</em>',`
+        ${briefPills('Reporting Cadence',        s6.reporting)}
+        ${briefField('Report Recipients',        s6.report_recipients)}
+        ${briefField('Reporting Dashboard',      s6.dashboard_tool)}
+        ${briefField('Success Definition',       s6.success_def)}
+        ${briefRow(briefField('Attribution Model', s6.attribution_model), briefField('Post-Campaign Review Format', s6.retro_format))}
+        ${briefField('ROI Calculation Method',   s6.roi_method)}
+        ${briefField('Strategic Questions',      s6.strategic_questions)}
+        ${briefField('Learnings Template',       s6.learnings_template)}
+        ${briefField('Next Campaign Trigger',    s6.next_cycle)}
+        ${briefField('Asset Archive Plan',       s6.asset_archive)}
+      `, 0.65),
+
+    ].join('');
+
+    document.getElementById('brief-root').innerHTML = `
+      <div class="brief-wrap">
+        <div class="brief-cover">
+          <div class="brief-eyebrow">Campaign Brief — Generated ${generated}</div>
+          <div class="brief-title"><em>${escHtml(name)}</em></div>
+          <div class="brief-meta">${coverMeta}</div>
+        </div>
+        ${sections}
+      </div>`;
+
+    // Wire Google Docs button now that data is ready
+    document.getElementById('gdocs-btn').addEventListener('click', () => {
+      const plain = buildBriefPlainText(s1, s2, s3, s4, s5, s6);
+      exportToGoogleDocs(plain);
+    });
+  }
+
+  buildBrief();
+  initResetModal();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage 5 — Optimization</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>:root { --stage-color: var(--c5); }</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <nav class="progress-nav">
+    <a href="stage1.html"><div class="prog-dot">1</div><span class="prog-label">Strategy</span></a>
+    <a href="stage2.html"><div class="prog-dot">2</div><span class="prog-label">Creative</span></a>
+    <a href="stage3.html"><div class="prog-dot">3</div><span class="prog-label">Pre-Launch</span></a>
+    <a href="stage4.html"><div class="prog-dot">4</div><span class="prog-label">Launch</span></a>
+    <a href="stage5.html"><div class="prog-dot">5</div><span class="prog-label">Optimize</span></a>
+    <a href="stage6.html"><div class="prog-dot">6</div><span class="prog-label">Reporting</span></a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">Stage 05 — Optimization</p>
+    <h1>Cut the losers. <em>Scale the winners.</em></h1>
+    <p class="subtitle">Plan your testing framework, budget reallocation rules, and the specific thresholds that trigger action — before you're in the heat of a live campaign.</p>
+  </header>
+
+  <!-- AI Refine Panel -->
+  <div class="ai-stage-wrap">
+    <button class="ai-panel-toggle" id="ai-panel-toggle">AI Assistant ✦</button>
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-panel-inner">
+        <p>Ask AI to draft your A/B testing plan, set kill/scale thresholds, or suggest budget reallocation rules based on your channel mix. Try: "Write a realistic kill and scale framework for a LinkedIn + Meta campaign with $80K budget."</p>
+        <div class="ai-input-row">
+          <textarea id="ai-refine-input" placeholder="e.g. We have a $80K budget split across LinkedIn and Meta. Write kill criteria and scale criteria based on hitting a $90 CPL target…"></textarea>
+          <button class="btn btn-ai" id="ai-refine-btn">✦ Update</button>
+        </div>
+        <div class="ai-spinner" id="ai-refine-spinner">✦ Updating fields…</div>
+        <div class="ai-error" id="ai-refine-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+
+    <div class="field-group">
+      <label class="field-label" for="opt_cadence">Optimization Cadence</label>
+      <p class="field-hint">How frequently will you formally review and optimize the campaign?</p>
+      <select id="opt_cadence">
+        <option value="">Select review frequency…</option>
+        <option>Daily (high-spend or short campaigns)</option>
+        <option>Every 2–3 days</option>
+        <option>Weekly</option>
+        <option>Bi-weekly</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="ab_creative">A/B Testing Plan — Creative</label>
+      <p class="field-hint">What creative variables will you test? Describe variants and what you're trying to learn.</p>
+      <textarea id="ab_creative" placeholder="e.g. Test 1: Hero image vs. product demo screenshot. Test 2: Benefit-led headline vs. pain-point headline. Test 3: Blue vs. white CTA button on landing page."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="ab_copy">A/B Testing Plan — Copy &amp; Messaging</label>
+      <p class="field-hint">What messaging or copy variables will you test?</p>
+      <textarea id="ab_copy" placeholder="e.g. Email subject line: curiosity-gap vs. direct benefit. Ad copy: ROI-focused vs. pain-point focused."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="ab_audience">A/B Testing Plan — Audience &amp; Targeting</label>
+      <p class="field-hint">Will you test different audience segments or targeting parameters?</p>
+      <textarea id="ab_audience" placeholder="e.g. Lookalike 1% vs. 5% on Meta. Job title vs. interest-based targeting on LinkedIn. Retargeting: 30-day visitors vs. 7-day video viewers."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="stat_sig">Statistical Significance Threshold</label>
+      <p class="field-hint">What confidence level will you require before declaring a test winner?</p>
+      <select id="stat_sig">
+        <option value="">Select threshold…</option>
+        <option>80% — faster decisions, lower-volume campaigns</option>
+        <option>90% — standard for most marketing tests</option>
+        <option>95% — higher confidence required before acting</option>
+        <option>Minimum sample size rule instead</option>
+        <option>Directional — act on clear trends without formal significance</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="budget_rules">Budget Reallocation Rules</label>
+      <p class="field-hint">Define the rules for how budget will be moved between channels mid-flight.</p>
+      <textarea id="budget_rules" placeholder="e.g. After 7 days: any channel with CPL > 2× target gets cut 50%. Any channel hitting target CPL for 3 consecutive days gets +25% budget. Max single-channel: 60% of total."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="kill_criteria">Kill Criteria — When to Pause a Channel</label>
+      <p class="field-hint">What specific metrics will trigger a full pause of a channel or ad set?</p>
+      <textarea id="kill_criteria" placeholder="e.g. Any ad set spending $500+ with zero conversions. CPL 3× target after 1,000 impressions. Email unsubscribe rate above 1% on any single send."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="scale_criteria">Scale Criteria — When to Increase Investment</label>
+      <p class="field-hint">What metrics signal it's time to scale up spend or distribution?</p>
+      <textarea id="scale_criteria" placeholder="e.g. Channel hitting target CPL for 7+ days with spend below $1K/day → increase 30%. ROAS above 4× for 5 days → unlock $10K reserve budget."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="lp_optimization">Landing Page Optimization Plan</label>
+      <p class="field-hint">How will you optimize the landing page during the campaign?</p>
+      <textarea id="lp_optimization" placeholder="e.g. Week 1: Baseline. Week 2: Test headline variant. Week 3: Test form length. Monitor heatmaps weekly via Hotjar. Target: 8%+ conversion rate."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="audience_refinement">Audience Refinement Plan</label>
+      <p class="field-hint">How will you tighten or expand audience targeting based on performance data?</p>
+      <textarea id="audience_refinement" placeholder="e.g. Build lookalike from converters after 50+ conversions. Exclude converters from prospecting. Create retargeting segments for 60s+ time-on-site visitors."></textarea>
+    </div>
+
+  </div>
+
+  <div class="nav-buttons">
+    <a href="stage4.html" class="btn btn-ghost">← Launch</a>
+    <span class="save-indicator" id="saved-msg">✓ Saved</span>
+    <a href="stage6.html" class="btn btn-primary">Reporting &amp; Iteration →</a>
+  </div>
+
+</div>
+<script src="wizard.js"></script>
+<script>
+  const STAGE  = 'stage5';
+  const FIELDS = ['opt_cadence','ab_creative','ab_copy','ab_audience','stat_sig','budget_rules','kill_criteria','scale_criteria','lp_optimization','audience_refinement'];
+  const CHECKS = {};
+  initStage({ stageName: STAGE, navIndex: 4, fieldIds: FIELDS, checkGroups: CHECKS });
+  initAiPanel(STAGE, FIELDS, CHECKS);
+</script>
+</body>
+</html>

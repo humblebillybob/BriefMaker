@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage 3 — Pre-Launch</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>:root { --stage-color: var(--c3); }</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <nav class="progress-nav">
+    <a href="stage1.html"><div class="prog-dot">1</div><span class="prog-label">Strategy</span></a>
+    <a href="stage2.html"><div class="prog-dot">2</div><span class="prog-label">Creative</span></a>
+    <a href="stage3.html"><div class="prog-dot">3</div><span class="prog-label">Pre-Launch</span></a>
+    <a href="stage4.html"><div class="prog-dot">4</div><span class="prog-label">Launch</span></a>
+    <a href="stage5.html"><div class="prog-dot">5</div><span class="prog-label">Optimize</span></a>
+    <a href="stage6.html"><div class="prog-dot">6</div><span class="prog-label">Reporting</span></a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">Stage 03 — Pre-Launch</p>
+    <h1>Get the <em>infrastructure</em> right.</h1>
+    <p class="subtitle">Poor setup before launch is the most expensive mistake in marketing. Plan your tracking, QA, and stakeholder alignment here before it bites you live.</p>
+  </header>
+
+  <!-- AI Refine Panel -->
+  <div class="ai-stage-wrap">
+    <button class="ai-panel-toggle" id="ai-panel-toggle">AI Assistant ✦</button>
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-panel-inner">
+        <p>Ask AI to help build out your tracking plan, suggest UTM conventions, or fill in your go/no-go criteria. Try: "We use HubSpot and Salesforce together — set up tracking accordingly" or "Generate a solid go/no-go checklist for a paid social campaign."</p>
+        <div class="ai-input-row">
+          <textarea id="ai-refine-input" placeholder="e.g. Add a 2-week warm-up email sequence to our existing customer list as the teaser strategy…"></textarea>
+          <button class="btn btn-ai" id="ai-refine-btn">✦ Update</button>
+        </div>
+        <div class="ai-spinner" id="ai-refine-spinner">✦ Updating fields…</div>
+        <div class="ai-error" id="ai-refine-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+
+    <div class="field-group">
+      <label class="field-label">Tracking Setup</label>
+      <p class="field-hint">Which tracking and analytics tools will be active for this campaign?</p>
+      <div class="pill-group">
+        <div class="pill"><input type="checkbox" id="tr_ga4"     value="Google Analytics 4"><label for="tr_ga4">Google Analytics 4</label></div>
+        <div class="pill"><input type="checkbox" id="tr_gtm"     value="Google Tag Manager"><label for="tr_gtm">Google Tag Manager</label></div>
+        <div class="pill"><input type="checkbox" id="tr_meta"    value="Meta Pixel"><label for="tr_meta">Meta Pixel</label></div>
+        <div class="pill"><input type="checkbox" id="tr_li"      value="LinkedIn Insight Tag"><label for="tr_li">LinkedIn Insight Tag</label></div>
+        <div class="pill"><input type="checkbox" id="tr_hs"      value="HubSpot Tracking"><label for="tr_hs">HubSpot</label></div>
+        <div class="pill"><input type="checkbox" id="tr_sf"      value="Salesforce CRM"><label for="tr_sf">Salesforce</label></div>
+        <div class="pill"><input type="checkbox" id="tr_segment" value="Segment"><label for="tr_segment">Segment</label></div>
+        <div class="pill"><input type="checkbox" id="tr_hotjar"  value="Hotjar / Session Recording"><label for="tr_hotjar">Hotjar / Recordings</label></div>
+        <div class="pill"><input type="checkbox" id="tr_custom"  value="Custom / Data Warehouse"><label for="tr_custom">Custom / Data Warehouse</label></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="conversion_events">Conversion Events to Track</label>
+      <p class="field-hint">List the specific conversion events or goals you'll configure in your analytics tools.</p>
+      <textarea id="conversion_events" placeholder="e.g. Form submission (demo request), PDF download, Email sign-up, Webinar registration, Purchase complete"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">UTM Convention</label>
+      <p class="field-hint">Define the UTM structure your team will use across all campaign links.</p>
+      <div class="two-col">
+        <div>
+          <label class="field-label sub" for="utm_source">utm_source format</label>
+          <input type="text" id="utm_source" placeholder="e.g. linkedin, google, newsletter">
+        </div>
+        <div>
+          <label class="field-label sub" for="utm_medium">utm_medium format</label>
+          <input type="text" id="utm_medium" placeholder="e.g. cpc, email, organic">
+        </div>
+      </div>
+      <div style="margin-top:12px;">
+        <label class="field-label sub" for="utm_campaign">utm_campaign naming convention</label>
+        <input type="text" id="utm_campaign" placeholder="e.g. q3-2025-product-launch">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">QA Checklist Areas</label>
+      <p class="field-hint">Which areas will your QA process cover before launch?</p>
+      <div class="pill-group">
+        <div class="pill"><input type="checkbox" id="qa_links"    value="All links and CTAs tested"><label for="qa_links">All links / CTAs</label></div>
+        <div class="pill"><input type="checkbox" id="qa_forms"    value="Form submissions tested end-to-end"><label for="qa_forms">Form submissions</label></div>
+        <div class="pill"><input type="checkbox" id="qa_mobile"   value="Mobile responsiveness verified"><label for="qa_mobile">Mobile responsiveness</label></div>
+        <div class="pill"><input type="checkbox" id="qa_tracking" value="Tracking pixels firing correctly"><label for="qa_tracking">Pixel / tracking fires</label></div>
+        <div class="pill"><input type="checkbox" id="qa_copy"     value="Copy proofread and approved"><label for="qa_copy">Copy proofread</label></div>
+        <div class="pill"><input type="checkbox" id="qa_legal"    value="Legal / compliance review"><label for="qa_legal">Legal / compliance</label></div>
+        <div class="pill"><input type="checkbox" id="qa_brand"    value="Brand guidelines checked"><label for="qa_brand">Brand guidelines</label></div>
+        <div class="pill"><input type="checkbox" id="qa_speed"    value="Page speed optimized"><label for="qa_speed">Page speed</label></div>
+        <div class="pill"><input type="checkbox" id="qa_email"    value="Email rendering tested across clients"><label for="qa_email">Email rendering</label></div>
+        <div class="pill"><input type="checkbox" id="qa_ad_specs" value="Ad specs and sizes verified"><label for="qa_ad_specs">Ad specs verified</label></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="stakeholder_plan">Stakeholder Briefing Plan</label>
+      <p class="field-hint">Who needs to be briefed before launch, and how?</p>
+      <textarea id="stakeholder_plan" placeholder="e.g. Sales team briefed via Slack on launch day with key messages. Exec summary sent to leadership 3 days before. CS team briefed so they can expect inbound."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="warmup_type">Warm-Up / Teaser Strategy</label>
+      <p class="field-hint">Will you seed early buzz or warm up audiences before the main launch?</p>
+      <select id="warmup_type">
+        <option value="">Select approach…</option>
+        <option>None — cold launch</option>
+        <option>Email teaser to existing list</option>
+        <option>Organic social posts before paid activates</option>
+        <option>Early access / waitlist</option>
+        <option>Partner / influencer pre-seeding</option>
+        <option>Press / media embargo lift</option>
+        <option>Community / forum seeding</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="warmup_details">Warm-Up Details</label>
+      <p class="field-hint">Describe the warm-up sequence and timing if applicable.</p>
+      <textarea id="warmup_details" placeholder="e.g. 2 weeks before: teaser email to top 500 customers. 1 week before: organic social countdown posts. 48hr before: early access for waitlist signups."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="go_nogo">Go / No-Go Criteria</label>
+      <p class="field-hint">What must be true for you to confirm the campaign is ready to launch?</p>
+      <textarea id="go_nogo" placeholder="e.g. All tracking verified firing. Landing page load time under 3s. Legal sign-off received. Sales team briefed. At least 3 creative variants per channel approved."></textarea>
+    </div>
+
+  </div>
+
+  <div class="nav-buttons">
+    <a href="stage2.html" class="btn btn-ghost">← Creative</a>
+    <span class="save-indicator" id="saved-msg">✓ Saved</span>
+    <a href="stage4.html" class="btn btn-primary">Launch &amp; Activation →</a>
+  </div>
+
+</div>
+<script src="wizard.js"></script>
+<script>
+  const STAGE  = 'stage3';
+  const FIELDS = ['conversion_events','utm_source','utm_medium','utm_campaign','stakeholder_plan','warmup_type','warmup_details','go_nogo'];
+  const CHECKS = {
+    tracking: ['tr_ga4','tr_gtm','tr_meta','tr_li','tr_hs','tr_sf','tr_segment','tr_hotjar','tr_custom'],
+    qa:       ['qa_links','qa_forms','qa_mobile','qa_tracking','qa_copy','qa_legal','qa_brand','qa_speed','qa_email','qa_ad_specs']
+  };
+  initStage({ stageName: STAGE, navIndex: 2, fieldIds: FIELDS, checkGroups: CHECKS });
+  initAiPanel(STAGE, FIELDS, CHECKS);
+</script>
+</body>
+</html>

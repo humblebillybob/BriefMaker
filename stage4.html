@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage 4 — Launch &amp; Activation</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>:root { --stage-color: var(--c4); }</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <nav class="progress-nav">
+    <a href="stage1.html"><div class="prog-dot">1</div><span class="prog-label">Strategy</span></a>
+    <a href="stage2.html"><div class="prog-dot">2</div><span class="prog-label">Creative</span></a>
+    <a href="stage3.html"><div class="prog-dot">3</div><span class="prog-label">Pre-Launch</span></a>
+    <a href="stage4.html"><div class="prog-dot">4</div><span class="prog-label">Launch</span></a>
+    <a href="stage5.html"><div class="prog-dot">5</div><span class="prog-label">Optimize</span></a>
+    <a href="stage6.html"><div class="prog-dot">6</div><span class="prog-label">Reporting</span></a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">Stage 04 — Launch &amp; Activation</p>
+    <h1>Go live <em>with intent.</em></h1>
+    <p class="subtitle">A coordinated multi-channel launch creates compounding impact. Define the sequence, who owns what, and what signals you'll watch in the critical first 72 hours.</p>
+  </header>
+
+  <!-- AI Refine Panel -->
+  <div class="ai-stage-wrap">
+    <button class="ai-panel-toggle" id="ai-panel-toggle">AI Assistant ✦</button>
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-panel-inner">
+        <p>Ask AI to draft your channel activation sequence, monitoring plan, or early-signal thresholds based on your budget and channels. Try: "Draft a day-by-day launch sequence for LinkedIn + email" or "What early signals should I watch for a $50K paid campaign?"</p>
+        <div class="ai-input-row">
+          <textarea id="ai-refine-input" placeholder="e.g. Our launch date is August 1st at 8am PT. Write a realistic channel order and monitoring plan for a LinkedIn + email + SEO campaign…"></textarea>
+          <button class="btn btn-ai" id="ai-refine-btn">✦ Update</button>
+        </div>
+        <div class="ai-spinner" id="ai-refine-spinner">✦ Updating fields…</div>
+        <div class="ai-error" id="ai-refine-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+
+    <div class="field-group">
+      <label class="field-label">Official Launch Date &amp; Time</label>
+      <p class="field-hint">When does the campaign go live?</p>
+      <div class="two-col">
+        <div>
+          <label class="field-label sub" for="launch_date">Launch Date</label>
+          <input type="date" id="launch_date">
+        </div>
+        <div>
+          <label class="field-label sub" for="launch_time">Launch Time &amp; Timezone</label>
+          <input type="text" id="launch_time" placeholder="e.g. 9:00 AM EST">
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="channel_order">Channel Activation Order</label>
+      <p class="field-hint">In what order will channels go live? Describe the sequence and timing gaps.</p>
+      <textarea id="channel_order" placeholder="e.g. 1. Email blast to full list (9 AM). 2. Paid social goes live simultaneously. 3. Paid search activates at noon. 4. PR wire release at 10 AM."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="paid_plan">Paid Media Plan</label>
+      <p class="field-hint">Platforms, initial daily budgets, and audience targeting at launch.</p>
+      <textarea id="paid_plan" placeholder="e.g. Meta: $300/day, lookalike from top 500 customers. LinkedIn: $200/day, job title targeting. Google Search: $150/day, branded + competitor terms."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="organic_plan">Organic Content Plan</label>
+      <p class="field-hint">What organic content is scheduled for launch week?</p>
+      <textarea id="organic_plan" placeholder="e.g. LinkedIn: 1 post/day for first 2 weeks. Twitter/X: 2–3 posts/day. Instagram: stories + 1 feed post per week."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="email_plan">Email Launch Sequence</label>
+      <p class="field-hint">Number of sends, segments, and approximate send times.</p>
+      <textarea id="email_plan" placeholder="e.g. Send 1 (Day 0): Launch announcement to full list. Send 2 (Day 3): Social proof to non-openers. Send 3 (Day 7): Last chance to non-converters."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="pr_plan">PR &amp; Earned Media Plan</label>
+      <p class="field-hint">Any press releases, media pitches, or earned coverage planned around launch?</p>
+      <textarea id="pr_plan" placeholder="e.g. Press release via BusinessWire on launch day. 3 media pitches to trade publications. CEO available for comment."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="team_owners">Launch Team &amp; Owners</label>
+      <p class="field-hint">Who is responsible for each channel or function on launch day?</p>
+      <textarea id="team_owners" placeholder="e.g. Paid media: Jane (agency). Email: Mark (in-house). Social: Sarah. PR: agency. Dev / tracking: Tom. Campaign lead: CMO."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="monitoring_plan">War Room / Monitoring Plan</label>
+      <p class="field-hint">How will you monitor performance in the first 24–72 hours?</p>
+      <textarea id="monitoring_plan" placeholder="e.g. Slack #campaign-live for real-time updates. GA4 + paid dashboards every 2 hours Day 1. Daily standup at 9 AM for first week."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="early_signals">Early Signal Thresholds</label>
+      <p class="field-hint">What numbers in the first 48–72 hours would trigger a pause or change of direction?</p>
+      <textarea id="early_signals" placeholder="e.g. CTR below 0.5% on paid social → swap creative. CPL above $150 after 500 impressions → reallocate. Any tracking failure → immediate pause."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="escalation">Escalation Path</label>
+      <p class="field-hint">If something goes wrong at launch, who makes the call and how fast?</p>
+      <select id="escalation">
+        <option value="">Select escalation speed…</option>
+        <option>Real-time — decision maker on standby during launch</option>
+        <option>Within 1 hour — decision maker available same day</option>
+        <option>Within 4 hours — next business day acceptable for minor issues</option>
+        <option>Documented — team has pre-authorized decision tree</option>
+      </select>
+    </div>
+
+  </div>
+
+  <div class="nav-buttons">
+    <a href="stage3.html" class="btn btn-ghost">← Pre-Launch</a>
+    <span class="save-indicator" id="saved-msg">✓ Saved</span>
+    <a href="stage5.html" class="btn btn-primary">Optimization →</a>
+  </div>
+
+</div>
+<script src="wizard.js"></script>
+<script>
+  const STAGE  = 'stage4';
+  const FIELDS = ['launch_date','launch_time','channel_order','paid_plan','organic_plan','email_plan','pr_plan','team_owners','monitoring_plan','early_signals','escalation'];
+  const CHECKS = {};
+  initStage({ stageName: STAGE, navIndex: 3, fieldIds: FIELDS, checkGroups: CHECKS });
+  initAiPanel(STAGE, FIELDS, CHECKS);
+</script>
+</body>
+</html>

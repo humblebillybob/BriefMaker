@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Campaign Wizard</title>
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+<div class="wrapper">
+
+  <header class="index-header">
+    <p class="eyebrow">Campaign Wizard</p>
+    <h1>Build a campaign <em>brief</em><br>step by step.</h1>
+    <p class="subtitle">Six focused stages. Answer the questions, move to the next. At the end, we'll generate a complete campaign brief you can take straight to your team.</p>
+  </header>
+
+  <!-- AI Prefill Panel -->
+  <div class="ai-prefill-wrap">
+    <div class="ai-prefill-panel" id="ai-prefill-panel">
+      <div class="ai-prefill-header">
+        <span class="ai-badge">AI ✦</span>
+        <span class="ai-prefill-title">Describe your campaign and we'll fill everything in</span>
+      </div>
+      <p class="ai-prefill-hint">Tell us what you're launching, who you're targeting, your budget, timeline, and goals. The more detail you give, the better the pre-fill. You can refine each stage individually afterwards.</p>
+      <div class="ai-input-row">
+        <textarea id="ai-campaign-input" placeholder="e.g. We're a B2B SaaS company launching a new AI analytics product in Q3. Target audience is data-driven CMOs at mid-market companies (200–2000 employees). Budget is $80K, mostly media spend. Goal is 300 qualified leads with CPL under $100. Channels: LinkedIn paid, email to our 12K list, and SEO content. Launch July 14th, running 8 weeks."></textarea>
+        <button class="btn btn-ai" id="ai-prefill-btn">✦ Pre-fill All Stages</button>
+      </div>
+      <div class="ai-spinner" id="ai-prefill-spinner">✦ AI is thinking — filling all 6 stages…</div>
+      <div class="ai-error" id="ai-prefill-error"></div>
+    </div>
+  </div>
+
+  <!-- Stage Cards -->
+  <div class="stages">
+
+    <a class="stage-card" href="stage1.html" style="--stage-color:var(--c1);">
+      <div class="card-left"><div class="card-dot"></div></div>
+      <div class="card-body"><div class="card-inner">
+        <div class="card-meta">
+          <div class="stage-num">Stage 01</div>
+          <div class="status-badge" id="s1-badge">Not started</div>
+        </div>
+        <div class="card-title">Strategy &amp; Planning</div>
+        <div class="card-desc">Set your goals, define your audience, allocate budget, pick channels, and lock in KPIs.</div>
+        <div class="card-tags">
+          <span class="card-tag">Goal Setting</span><span class="card-tag">Audience Research</span>
+          <span class="card-tag">Budget</span><span class="card-tag">Channel Mix</span><span class="card-tag">KPIs</span>
+        </div>
+      </div></div>
+    </a>
+
+    <a class="stage-card" href="stage2.html" style="--stage-color:var(--c2);">
+      <div class="card-left"><div class="card-dot"></div></div>
+      <div class="card-body"><div class="card-inner">
+        <div class="card-meta">
+          <div class="stage-num">Stage 02</div>
+          <div class="status-badge" id="s2-badge">Not started</div>
+        </div>
+        <div class="card-title">Creative Development</div>
+        <div class="card-desc">Define your messaging, tone, value proposition, and the assets you'll need to produce.</div>
+        <div class="card-tags">
+          <span class="card-tag">Messaging</span><span class="card-tag">Tone of Voice</span>
+          <span class="card-tag">Value Prop</span><span class="card-tag">Asset List</span>
+        </div>
+      </div></div>
+    </a>
+
+    <a class="stage-card" href="stage3.html" style="--stage-color:var(--c3);">
+      <div class="card-left"><div class="card-dot"></div></div>
+      <div class="card-body"><div class="card-inner">
+        <div class="card-meta">
+          <div class="stage-num">Stage 03</div>
+          <div class="status-badge" id="s3-badge">Not started</div>
+        </div>
+        <div class="card-title">Pre-Launch</div>
+        <div class="card-desc">Plan QA, tracking setup, UTM structure, scheduling, and any warm-up activity.</div>
+        <div class="card-tags">
+          <span class="card-tag">QA Plan</span><span class="card-tag">Tracking</span>
+          <span class="card-tag">UTMs</span><span class="card-tag">Scheduling</span>
+        </div>
+      </div></div>
+    </a>
+
+    <a class="stage-card" href="stage4.html" style="--stage-color:var(--c4);">
+      <div class="card-left"><div class="card-dot"></div></div>
+      <div class="card-body"><div class="card-inner">
+        <div class="card-meta">
+          <div class="stage-num">Stage 04</div>
+          <div class="status-badge" id="s4-badge">Not started</div>
+        </div>
+        <div class="card-title">Launch &amp; Activation</div>
+        <div class="card-desc">Define your launch sequence, channel order, rollout timeline, and early-signal checkpoints.</div>
+        <div class="card-tags">
+          <span class="card-tag">Launch Date</span><span class="card-tag">Channel Order</span>
+          <span class="card-tag">Paid</span><span class="card-tag">Organic</span><span class="card-tag">PR</span>
+        </div>
+      </div></div>
+    </a>
+
+    <a class="stage-card" href="stage5.html" style="--stage-color:var(--c5);">
+      <div class="card-left"><div class="card-dot"></div></div>
+      <div class="card-body"><div class="card-inner">
+        <div class="card-meta">
+          <div class="stage-num">Stage 05</div>
+          <div class="status-badge" id="s5-badge">Not started</div>
+        </div>
+        <div class="card-title">Optimization</div>
+        <div class="card-desc">Outline your testing plan, budget reallocation rules, and success thresholds for cutting or scaling.</div>
+        <div class="card-tags">
+          <span class="card-tag">A/B Tests</span><span class="card-tag">Budget Rules</span>
+          <span class="card-tag">Thresholds</span><span class="card-tag">Audience Tuning</span>
+        </div>
+      </div></div>
+    </a>
+
+    <a class="stage-card" href="stage6.html" style="--stage-color:var(--c6);">
+      <div class="card-left"><div class="card-dot"></div></div>
+      <div class="card-body"><div class="card-inner">
+        <div class="card-meta">
+          <div class="stage-num">Stage 06</div>
+          <div class="status-badge" id="s6-badge">Not started</div>
+        </div>
+        <div class="card-title">Reporting &amp; Iteration</div>
+        <div class="card-desc">Set your reporting cadence, define success, and plan how learnings feed forward.</div>
+        <div class="card-tags">
+          <span class="card-tag">KPI Review</span><span class="card-tag">ROI</span>
+          <span class="card-tag">Reporting Cadence</span><span class="card-tag">Next Cycle</span>
+        </div>
+      </div></div>
+    </a>
+
+  </div>
+
+  <div class="start-wrap">
+    <a href="stage1.html" class="btn-start" id="main-cta">Begin Stage 1 →</a>
+    <p class="start-note" id="start-note">Your answers auto-save as you go.<br>Return to any stage at any time.</p>
+  </div>
+
+  <footer>Campaign Wizard &mdash; all data stored locally in your browser.</footer>
+</div>
+<script src="wizard.js"></script>
+<script>
+  initIndexCards();
+  initIndexAi();
+</script>
+</body>
+</html>

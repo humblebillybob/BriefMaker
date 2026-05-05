@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage 1 — Strategy &amp; Planning</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>:root { --stage-color: var(--c1); }</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <nav class="progress-nav">
+    <a href="stage1.html"><div class="prog-dot">1</div><span class="prog-label">Strategy</span></a>
+    <a href="stage2.html"><div class="prog-dot">2</div><span class="prog-label">Creative</span></a>
+    <a href="stage3.html"><div class="prog-dot">3</div><span class="prog-label">Pre-Launch</span></a>
+    <a href="stage4.html"><div class="prog-dot">4</div><span class="prog-label">Launch</span></a>
+    <a href="stage5.html"><div class="prog-dot">5</div><span class="prog-label">Optimize</span></a>
+    <a href="stage6.html"><div class="prog-dot">6</div><span class="prog-label">Reporting</span></a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">Stage 01 — Strategy &amp; Planning</p>
+    <h1>The <em>foundation</em> of everything.</h1>
+    <p class="subtitle">Before a single asset is made or a dollar spent, you need a clear strategy. Define what success looks like, who you're reaching, and how you'll get there.</p>
+  </header>
+
+  <!-- AI Refine Panel -->
+  <div class="ai-stage-wrap">
+    <button class="ai-panel-toggle" id="ai-panel-toggle">AI Assistant ✦</button>
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-panel-inner">
+        <p>Describe any changes or additions for this stage and AI will update the fields. Try: "We're targeting enterprise not mid-market" or "Add paid search to our channels and set CPL target to $60."</p>
+        <div class="ai-input-row">
+          <textarea id="ai-refine-input" placeholder="e.g. Actually our budget is $120K and we want to add events and webinars to the channel mix…"></textarea>
+          <button class="btn btn-ai" id="ai-refine-btn">✦ Update</button>
+        </div>
+        <div class="ai-spinner" id="ai-refine-spinner">✦ Updating fields…</div>
+        <div class="ai-error" id="ai-refine-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+
+    <div class="field-group">
+      <label class="field-label" for="campaign_name">Campaign Name</label>
+      <p class="field-hint">Give this campaign a working name your team will recognize.</p>
+      <input type="text" id="campaign_name" placeholder="e.g. Q3 Product Launch — Summer 2025">
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="campaign_objective">Campaign Objective</label>
+      <p class="field-hint">What is the single most important outcome this campaign must achieve?</p>
+      <select id="campaign_objective">
+        <option value="">Select a primary objective…</option>
+        <option>Brand Awareness</option>
+        <option>Lead Generation</option>
+        <option>Customer Acquisition</option>
+        <option>Product Launch</option>
+        <option>Customer Retention / Re-engagement</option>
+        <option>Event Promotion</option>
+        <option>Revenue / Sales Growth</option>
+        <option>Content &amp; Thought Leadership</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="objective_detail">Objective Detail</label>
+      <p class="field-hint">Describe the goal in your own words. Be specific — vague goals lead to vague results.</p>
+      <textarea id="objective_detail" placeholder="e.g. Generate 500 qualified leads from mid-market SaaS companies in North America by end of Q3, with a target CPL under $80."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="target_audience">Target Audience</label>
+      <p class="field-hint">Who are you trying to reach? Describe demographics, firmographics, or psychographics.</p>
+      <textarea id="target_audience" placeholder="e.g. Marketing managers and VPs at B2B SaaS companies with 50–500 employees. Pain point: scaling pipeline without growing headcount."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="audience_size">Audience Size Estimate</label>
+      <p class="field-hint">How large is your total addressable audience?</p>
+      <select id="audience_size">
+        <option value="">Select approximate size…</option>
+        <option>Under 10,000</option>
+        <option>10,000 – 100,000</option>
+        <option>100,000 – 500,000</option>
+        <option>500,000 – 2M</option>
+        <option>2M – 10M</option>
+        <option>10M+</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="budget">Total Campaign Budget</label>
+      <p class="field-hint">What is the full budget allocated for this campaign (media spend + production)?</p>
+      <input type="text" id="budget" placeholder="e.g. $50,000">
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="budget_split">Budget Split</label>
+      <p class="field-hint">How do you plan to allocate budget across media spend vs. production?</p>
+      <input type="range" id="budget_split" min="0" max="100" value="70">
+      <div class="range-labels"><span>100% Production</span><span>100% Media Spend</span></div>
+      <div class="range-value" id="split-display">70% Media / 30% Production</div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Channel Mix</label>
+      <p class="field-hint">Which channels will this campaign run on? Select all that apply.</p>
+      <div class="pill-group">
+        <div class="pill"><input type="checkbox" id="ch_paid_social"    value="Paid Social"><label for="ch_paid_social">Paid Social</label></div>
+        <div class="pill"><input type="checkbox" id="ch_organic_social" value="Organic Social"><label for="ch_organic_social">Organic Social</label></div>
+        <div class="pill"><input type="checkbox" id="ch_email"          value="Email Marketing"><label for="ch_email">Email Marketing</label></div>
+        <div class="pill"><input type="checkbox" id="ch_search"         value="Paid Search (SEM)"><label for="ch_search">Paid Search</label></div>
+        <div class="pill"><input type="checkbox" id="ch_seo"            value="SEO / Content"><label for="ch_seo">SEO / Content</label></div>
+        <div class="pill"><input type="checkbox" id="ch_display"        value="Display / Programmatic"><label for="ch_display">Display / Programmatic</label></div>
+        <div class="pill"><input type="checkbox" id="ch_pr"             value="PR / Earned Media"><label for="ch_pr">PR / Earned Media</label></div>
+        <div class="pill"><input type="checkbox" id="ch_events"         value="Events / Webinars"><label for="ch_events">Events / Webinars</label></div>
+        <div class="pill"><input type="checkbox" id="ch_influencer"     value="Influencer / Partnerships"><label for="ch_influencer">Influencer / Partnerships</label></div>
+        <div class="pill"><input type="checkbox" id="ch_podcast"        value="Podcast / Audio"><label for="ch_podcast">Podcast / Audio</label></div>
+        <div class="pill"><input type="checkbox" id="ch_ooh"            value="OOH / Print"><label for="ch_ooh">OOH / Print</label></div>
+        <div class="pill"><input type="checkbox" id="ch_affiliate"      value="Affiliate"><label for="ch_affiliate">Affiliate</label></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Primary KPIs</label>
+      <p class="field-hint">Which metrics will you use to declare this campaign a success?</p>
+      <div class="pill-group">
+        <div class="pill"><input type="checkbox" id="kpi_impressions" value="Impressions / Reach"><label for="kpi_impressions">Impressions / Reach</label></div>
+        <div class="pill"><input type="checkbox" id="kpi_clicks"      value="Clicks / CTR"><label for="kpi_clicks">Clicks / CTR</label></div>
+        <div class="pill"><input type="checkbox" id="kpi_leads"       value="Leads / Sign-ups"><label for="kpi_leads">Leads / Sign-ups</label></div>
+        <div class="pill"><input type="checkbox" id="kpi_cpl"         value="Cost per Lead (CPL)"><label for="kpi_cpl">Cost per Lead</label></div>
+        <div class="pill"><input type="checkbox" id="kpi_cac"         value="Customer Acquisition Cost (CAC)"><label for="kpi_cac">CAC</label></div>
+        <div class="pill"><input type="checkbox" id="kpi_revenue"     value="Revenue / Pipeline"><label for="kpi_revenue">Revenue / Pipeline</label></div>
+        <div class="pill"><input type="checkbox" id="kpi_roas"        value="ROAS"><label for="kpi_roas">ROAS</label></div>
+        <div class="pill"><input type="checkbox" id="kpi_engagement"  value="Engagement Rate"><label for="kpi_engagement">Engagement Rate</label></div>
+        <div class="pill"><input type="checkbox" id="kpi_conv"        value="Conversion Rate"><label for="kpi_conv">Conversion Rate</label></div>
+        <div class="pill"><input type="checkbox" id="kpi_brand"       value="Brand Lift"><label for="kpi_brand">Brand Lift</label></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="kpi_targets">KPI Targets</label>
+      <p class="field-hint">What specific numbers are you aiming for?</p>
+      <textarea id="kpi_targets" placeholder="e.g. 500 leads, CPL &lt; $80, 3.5% CTR on paid social, $200K pipeline attributed"></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Campaign Timeline</label>
+      <p class="field-hint">When does this campaign start and end?</p>
+      <div class="two-col">
+        <div>
+          <label class="field-label sub" for="start_date">Start Date</label>
+          <input type="date" id="start_date">
+        </div>
+        <div>
+          <label class="field-label sub" for="end_date">End Date</label>
+          <input type="date" id="end_date">
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="competitors">Competitors to Watch</label>
+      <p class="field-hint">Which competitors are active in this space and may be targeting the same audience?</p>
+      <textarea id="competitors" placeholder="e.g. CompetitorA (aggressive paid search), CompetitorB (strong organic), CompetitorC (sponsoring same events)"></textarea>
+    </div>
+
+  </div>
+
+  <div class="nav-buttons">
+    <a href="index.html" class="btn btn-ghost">← Overview</a>
+    <span class="save-indicator" id="saved-msg">✓ Saved</span>
+    <a href="stage2.html" class="btn btn-primary">Creative Development →</a>
+  </div>
+
+</div>
+<script src="wizard.js"></script>
+<script>
+  const STAGE  = 'stage1';
+  const FIELDS = ['campaign_name','campaign_objective','objective_detail','target_audience','audience_size','budget','budget_split','kpi_targets','start_date','end_date','competitors'];
+  const CHECKS = {
+    channels: ['ch_paid_social','ch_organic_social','ch_email','ch_search','ch_seo','ch_display','ch_pr','ch_events','ch_influencer','ch_podcast','ch_ooh','ch_affiliate'],
+    kpis:     ['kpi_impressions','kpi_clicks','kpi_leads','kpi_cpl','kpi_cac','kpi_revenue','kpi_roas','kpi_engagement','kpi_conv','kpi_brand']
+  };
+  initStage({ stageName: STAGE, navIndex: 0, fieldIds: FIELDS, checkGroups: CHECKS });
+  initRangeSlider('budget_split', 'split-display', v => v + '% Media / ' + (100 - v) + '% Production');
+  initAiPanel(STAGE, FIELDS, CHECKS);
+</script>
+</body>
+</html>

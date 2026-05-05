@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stage 2 — Creative Development</title>
+  <link rel="stylesheet" href="shared.css">
+  <style>:root { --stage-color: var(--c2); }</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <nav class="progress-nav">
+    <a href="stage1.html"><div class="prog-dot">1</div><span class="prog-label">Strategy</span></a>
+    <a href="stage2.html"><div class="prog-dot">2</div><span class="prog-label">Creative</span></a>
+    <a href="stage3.html"><div class="prog-dot">3</div><span class="prog-label">Pre-Launch</span></a>
+    <a href="stage4.html"><div class="prog-dot">4</div><span class="prog-label">Launch</span></a>
+    <a href="stage5.html"><div class="prog-dot">5</div><span class="prog-label">Optimize</span></a>
+    <a href="stage6.html"><div class="prog-dot">6</div><span class="prog-label">Reporting</span></a>
+  </nav>
+
+  <header>
+    <p class="eyebrow">Stage 02 — Creative Development</p>
+    <h1>Build the <em>message</em> first.</h1>
+    <p class="subtitle">Strong creative is the multiplier on every dollar you spend. Define your core message, value proposition, and tone before touching design or production.</p>
+  </header>
+
+  <!-- AI Refine Panel -->
+  <div class="ai-stage-wrap">
+    <button class="ai-panel-toggle" id="ai-panel-toggle">AI Assistant ✦</button>
+    <div class="ai-panel" id="ai-panel">
+      <div class="ai-panel-inner">
+        <p>Ask AI to adjust the messaging direction, generate headline options, shift the tone, or add to the asset list. Try: "Make the tone more bold and urgent" or "Write 3 headline options focused on ROI."</p>
+        <div class="ai-input-row">
+          <textarea id="ai-refine-input" placeholder="e.g. We're a premium brand — make the tone more refined and less aggressive. Add a case study and eBook to the asset list…"></textarea>
+          <button class="btn btn-ai" id="ai-refine-btn">✦ Update</button>
+        </div>
+        <div class="ai-spinner" id="ai-refine-spinner">✦ Updating fields…</div>
+        <div class="ai-error" id="ai-refine-error"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-section">
+
+    <div class="field-group">
+      <label class="field-label" for="core_message">Core Campaign Message</label>
+      <p class="field-hint">If your audience only remembered one thing from this campaign, what should it be? One sentence.</p>
+      <textarea id="core_message" placeholder="e.g. Acme helps marketing teams generate 3× more pipeline with half the headcount — without sacrificing quality."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="value_prop">Value Proposition</label>
+      <p class="field-hint">What specific, unique value do you deliver? Why choose you over alternatives?</p>
+      <textarea id="value_prop" placeholder="e.g. Unlike legacy tools that require a full ops team, Acme is plug-and-play in under a day, includes built-in attribution, and is priced per outcome — not per seat."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="pain_points">Primary Pain Points Addressed</label>
+      <p class="field-hint">What specific frustrations or problems does this campaign speak to?</p>
+      <textarea id="pain_points" placeholder="e.g. Wasted ad spend with no visibility into what's driving pipeline. Too many tools that don't talk to each other. Pressure to prove ROI to leadership."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Tone of Voice</label>
+      <p class="field-hint">How should this campaign sound and feel? Select all that apply.</p>
+      <div class="pill-group">
+        <div class="pill"><input type="checkbox" id="t_bold"       value="Bold &amp; Confident"><label for="t_bold">Bold &amp; Confident</label></div>
+        <div class="pill"><input type="checkbox" id="t_friendly"   value="Friendly &amp; Approachable"><label for="t_friendly">Friendly &amp; Approachable</label></div>
+        <div class="pill"><input type="checkbox" id="t_expert"     value="Expert &amp; Authoritative"><label for="t_expert">Expert &amp; Authoritative</label></div>
+        <div class="pill"><input type="checkbox" id="t_playful"    value="Playful &amp; Witty"><label for="t_playful">Playful &amp; Witty</label></div>
+        <div class="pill"><input type="checkbox" id="t_urgent"     value="Urgent &amp; Direct"><label for="t_urgent">Urgent &amp; Direct</label></div>
+        <div class="pill"><input type="checkbox" id="t_empathetic" value="Empathetic &amp; Human"><label for="t_empathetic">Empathetic &amp; Human</label></div>
+        <div class="pill"><input type="checkbox" id="t_premium"    value="Premium &amp; Refined"><label for="t_premium">Premium &amp; Refined</label></div>
+        <div class="pill"><input type="checkbox" id="t_data"       value="Data-Driven &amp; Precise"><label for="t_data">Data-Driven &amp; Precise</label></div>
+        <div class="pill"><input type="checkbox" id="t_inspire"    value="Inspirational"><label for="t_inspire">Inspirational</label></div>
+        <div class="pill"><input type="checkbox" id="t_minimal"    value="Minimal &amp; Clean"><label for="t_minimal">Minimal &amp; Clean</label></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="headlines">Headline Directions</label>
+      <p class="field-hint">Write 2–3 candidate headlines. These don't need to be final.</p>
+      <textarea id="headlines" placeholder="1. Stop guessing. Start growing.&#10;2. The pipeline platform that proves itself.&#10;3. 3× pipeline. Half the team. Zero excuses."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Primary Call to Action</label>
+      <p class="field-hint">What action do you most want the audience to take?</p>
+      <div class="two-col">
+        <div>
+          <label class="field-label sub" for="cta_text">CTA Text</label>
+          <input type="text" id="cta_text" placeholder="e.g. Start Free Trial">
+        </div>
+        <div>
+          <label class="field-label sub" for="cta_url">Destination URL</label>
+          <input type="url" id="cta_url" placeholder="https://…">
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Secondary CTA (if any)</label>
+      <p class="field-hint">A softer conversion option for people not ready to commit.</p>
+      <div class="two-col">
+        <div>
+          <label class="field-label sub" for="cta2_text">CTA Text</label>
+          <input type="text" id="cta2_text" placeholder="e.g. Download the Guide">
+        </div>
+        <div>
+          <label class="field-label sub" for="cta2_url">Destination URL</label>
+          <input type="url" id="cta2_url" placeholder="https://…">
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label">Assets to Produce</label>
+      <p class="field-hint">Which creative assets will need to be made for this campaign?</p>
+      <div class="pill-group">
+        <div class="pill"><input type="checkbox" id="a_ads_social"  value="Social Ad Creatives"><label for="a_ads_social">Social Ad Creatives</label></div>
+        <div class="pill"><input type="checkbox" id="a_ads_display" value="Display Banners"><label for="a_ads_display">Display Banners</label></div>
+        <div class="pill"><input type="checkbox" id="a_lp"          value="Landing Page"><label for="a_lp">Landing Page</label></div>
+        <div class="pill"><input type="checkbox" id="a_email_seq"   value="Email Sequence"><label for="a_email_seq">Email Sequence</label></div>
+        <div class="pill"><input type="checkbox" id="a_video"       value="Video (Hero)"><label for="a_video">Video (Hero)</label></div>
+        <div class="pill"><input type="checkbox" id="a_short_video" value="Short-form Video"><label for="a_short_video">Short-form Video</label></div>
+        <div class="pill"><input type="checkbox" id="a_blog"        value="Blog / SEO Content"><label for="a_blog">Blog / SEO Content</label></div>
+        <div class="pill"><input type="checkbox" id="a_ebook"       value="eBook / Guide"><label for="a_ebook">eBook / Guide</label></div>
+        <div class="pill"><input type="checkbox" id="a_case_study"  value="Case Study"><label for="a_case_study">Case Study</label></div>
+        <div class="pill"><input type="checkbox" id="a_webinar"     value="Webinar / Slides"><label for="a_webinar">Webinar / Slides</label></div>
+        <div class="pill"><input type="checkbox" id="a_pr"          value="Press Release"><label for="a_pr">Press Release</label></div>
+        <div class="pill"><input type="checkbox" id="a_influencer"  value="Influencer Brief"><label for="a_influencer">Influencer Brief</label></div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="visual_style">Visual Style Direction</label>
+      <p class="field-hint">Describe the visual identity or aesthetic direction. Reference examples if helpful.</p>
+      <textarea id="visual_style" placeholder="e.g. Clean, minimal dark theme with electric blue accents. Data-forward with charts front and center. Reference: Stripe and Linear's aesthetic."></textarea>
+    </div>
+
+    <div class="field-group">
+      <label class="field-label" for="restrictions">Content Restrictions / Brand Guidelines</label>
+      <p class="field-hint">Any topics, visuals, claims, or styles that must be avoided?</p>
+      <textarea id="restrictions" placeholder="e.g. No competitor comparisons. All claims approved by legal. No stock photography."></textarea>
+    </div>
+
+  </div>
+
+  <div class="nav-buttons">
+    <a href="stage1.html" class="btn btn-ghost">← Strategy</a>
+    <span class="save-indicator" id="saved-msg">✓ Saved</span>
+    <a href="stage3.html" class="btn btn-primary">Pre-Launch →</a>
+  </div>
+
+</div>
+<script src="wizard.js"></script>
+<script>
+  const STAGE  = 'stage2';
+  const FIELDS = ['core_message','value_prop','pain_points','headlines','cta_text','cta_url','cta2_text','cta2_url','visual_style','restrictions'];
+  const CHECKS = {
+    tone:   ['t_bold','t_friendly','t_expert','t_playful','t_urgent','t_empathetic','t_premium','t_data','t_inspire','t_minimal'],
+    assets: ['a_ads_social','a_ads_display','a_lp','a_email_seq','a_video','a_short_video','a_blog','a_ebook','a_case_study','a_webinar','a_pr','a_influencer']
+  };
+  initStage({ stageName: STAGE, navIndex: 1, fieldIds: FIELDS, checkGroups: CHECKS });
+  initAiPanel(STAGE, FIELDS, CHECKS);
+</script>
+</body>
+</html>
