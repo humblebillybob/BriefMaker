@@ -113,7 +113,7 @@ function initStage(config) {
    AI HELPERS
    ============================================================ */
 
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+const CLAUDE_MODEL = 'claude-sonnet-4-5';
 
 /* Low-level API call — returns parsed JSON or throws */
 async function callClaude(systemPrompt, userMessage) {
@@ -129,7 +129,7 @@ async function callClaude(systemPrompt, userMessage) {
     },
     body: JSON.stringify({
       model: CLAUDE_MODEL,
-      max_tokens: 1000,
+      max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }]
     })
@@ -138,8 +138,14 @@ async function callClaude(systemPrompt, userMessage) {
   const data = await res.json();
   const text = data.content.filter(b => b.type === 'text').map(b => b.text).join('');
   // Strip markdown fences if present
-  const clean = text.replace(/^```json\s*/i, '').replace(/\s*```$/i, '').trim();
-  return JSON.parse(clean);
+  const clean = text
+  .replace(/^```json\s*/i, '')
+  .replace(/\s*```$/i, '')
+  .replace(/&amp;/g, '&')
+  .replace(/&lt;/g, '<')
+  .replace(/&gt;/g, '>')
+  .trim();
+return JSON.parse(clean);
 }
 
 /* ── UPFRONT: fill ALL stages from a single campaign description ── */
