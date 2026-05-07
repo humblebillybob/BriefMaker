@@ -873,15 +873,43 @@ footer {
    PRINT
    ============================================================ */
 @media print {
-  .topbar, .reset-overlay { display: none !important; }
+  .topbar, .reset-overlay, .settings-btn, .settings-overlay { display: none !important; }
+
+  /* Kill all animations so nothing is frozen at opacity:0 */
+  * { animation: none !important; transition: none !important; }
+  .brief-wrap, .brief-section, .brief-cover { opacity: 1 !important; transform: none !important; }
+
   body { background: white; color: #111; padding: 0; }
   body::before { display: none; }
-  .brief-wrap { padding: 40px; }
+
+  /* Tighter page layout */
+  .brief-wrap { padding: 20px 28px; max-width: 100%; }
+
+  /* Compact cover — was 64px margin + 48px padding */
+  .brief-cover { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 2px solid #e5e7eb; }
+  .brief-eyebrow { color: #555; }
+  .brief-meta-item { color: #555; }
+  .brief-meta-item strong { color: #111; }
+
+  /* Sections: tighten spacing, keep heading pinned to its body */
+  .brief-section { border-bottom: 1px solid #e5e7eb; margin-bottom: 14px; padding-bottom: 14px; page-break-inside: avoid; break-inside: avoid; }
+  .brief-section:last-child { border-bottom: none; }
+  .section-header { margin-bottom: 12px; page-break-after: avoid; break-after: avoid; }
+
+  /* Fields */
+  .brief-field { margin-bottom: 8px; }
+  .brief-field:last-child { margin-bottom: 0; }
+  .field-row { margin-bottom: 8px; gap: 12px; }
+  .field-row:last-child { margin-bottom: 0; }
+
+  /* Colors */
   .brief-title em { color: #6b21a8; }
-  .brief-section { border-bottom: 1px solid #e5e7eb; page-break-inside: avoid; }
+  .section-heading { color: #111; }
+  .section-heading em { color: #6b21a8; }
   .field-name, .section-num { color: #6b21a8; }
+  .field-value { color: #111; }
+  .field-value.empty { color: #999; font-style: italic; }
   .pill-item { background: #f3e8ff; color: #6b21a8; border-color: #ddd6fe; }
-  .brief-cover { border-bottom: 1px solid #e5e7eb; }
 }
 
 /* ============================================================

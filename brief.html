@@ -15,7 +15,7 @@
       <span class="topbar-title">Campaign Brief</span>
     </div>
     <div class="topbar-actions brief-actions">
-      <button class="btn btn-sm btn-gdocs" id="gdocs-btn">Open in Google Docs</button>
+      <button class="btn btn-sm btn-gdocs" id="gdocs-btn">Copy Brief</button>
       <button class="btn btn-sm btn-print" onclick="window.print()">Print / Save PDF</button>
       <button class="btn btn-sm btn-danger" data-action="open-reset">Reset All Data</button>
     </div>
@@ -164,10 +164,9 @@
         ${sections}
       </div>`;
 
-    // Wire Google Docs button now that data is ready
+    // Wire Copy Brief button
     document.getElementById('gdocs-btn').addEventListener('click', () => {
-      const plain = buildBriefPlainText(s1, s2, s3, s4, s5, s6);
-      exportToGoogleDocs(plain);
+      copyBrief(s1, s2, s3, s4, s5, s6);
     });
   }
 

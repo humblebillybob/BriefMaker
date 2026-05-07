@@ -484,23 +484,74 @@ ${'─'.repeat(60)}
 ${pills('Reporting Cadence', s6.reporting)}${field('Report Recipients', s6.report_recipients)}${field('Reporting Dashboard', s6.dashboard_tool)}${field('Success Definition', s6.success_def)}${field('Attribution Model', s6.attribution_model)}${field('ROI Calculation Method', s6.roi_method)}${field('Post-Campaign Review Format', s6.retro_format)}${field('Strategic Questions', s6.strategic_questions)}${field('Learnings Template', s6.learnings_template)}${field('Next Campaign Trigger', s6.next_cycle)}${field('Asset Archive Plan', s6.asset_archive)}`;
 }
 
-/* ── Google Docs export ── */
-async function exportToGoogleDocs(plainText) {
-  try {
-    await navigator.clipboard.writeText(plainText);
-  } catch(e) {
-    // Fallback: create a textarea and copy
-    const ta = document.createElement('textarea');
-    ta.value = plainText;
-    ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta);
+/* ── HTML brief for clipboard (pastes cleanly into Google Docs) ── */
+function buildBriefHtml(s1, s2, s3, s4, s5, s6) {
+  const name     = s1.campaign_name || 'Untitled Campaign';
+  const splitVal = s1.budget_split  || '70';
+  const splitLabel = splitVal + '% Media / ' + (100 - parseInt(splitVal)) + '% Production';
+
+  const lbl = 'display:block;font-size:10px;color:#6b21a8;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:10px 0 2px;font-family:Arial,sans-serif;';
+  const val = 'display:block;font-size:13px;color:#111;margin:0 0 6px;line-height:1.6;font-family:Arial,sans-serif;';
+  const pill = 'display:inline-block;font-size:11px;background:#f3e8ff;color:#6b21a8;border:1px solid #ddd6fe;border-radius:4px;padding:2px 10px;margin:2px 2px 4px;font-family:Arial,sans-serif;';
+  const h2 = 'font-size:15px;color:#111;border-bottom:1px solid #e5e7eb;padding-bottom:5px;margin:22px 0 10px;font-family:Arial,sans-serif;';
+
+  function f(label, value) {
+    if (!value || !String(value).trim()) return '';
+    return `<span style="${lbl}">${label}</span><span style="${val}">${String(value).replace(/\n/g,'<br>')}</span>`;
   }
-  // Open blank Google Doc
-  window.open('https://docs.google.com/document/create', '_blank');
-  // Show toast
-  showToast('Brief copied to clipboard — paste it into your new Google Doc with Ctrl+V / ⌘V');
+  function p(label, arr) {
+    if (!arr || !arr.length) return '';
+    return `<span style="${lbl}">${label}</span><div style="margin-bottom:8px;">${arr.map(v=>`<span style="${pill}">${v}</span>`).join('')}</div>`;
+  }
+  function sec(num, title, body) {
+    return `<h2 style="${h2}">${num} — ${title}</h2>${body}`;
+  }
+
+  const meta = [
+    s1.campaign_objective ? `<strong>Objective:</strong> ${s1.campaign_objective}` : '',
+    s1.budget             ? `<strong>Budget:</strong> ${s1.budget}` : '',
+    (s1.start_date && s1.end_date) ? `<strong>Dates:</strong> ${s1.start_date} → ${s1.end_date}` : '',
+  ].filter(Boolean).join(' &nbsp;·&nbsp; ');
+
+  return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#111;background:#fff;max-width:780px;margin:0;padding:28px;">
+<h1 style="font-size:22px;color:#111;margin:0 0 4px;font-family:Georgia,serif;">${name}</h1>
+<p style="font-size:11px;color:#777;margin:0 0 ${meta?'8px':'20px'};">Campaign Brief — ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+${meta?`<p style="font-size:12px;color:#555;margin:0 0 18px;">${meta}</p>`:''}
+<hr style="border:none;border-top:2px solid #e5e7eb;margin:0 0 4px;">
+${sec('01','Strategy &amp; Planning',`${f('Campaign Objective',s1.campaign_objective)}${f('Objective Detail',s1.objective_detail)}${f('Target Audience',s1.target_audience)}${f('Audience Size',s1.audience_size)}${f('Total Budget',s1.budget)}${f('Budget Split',splitLabel)}${p('Channel Mix',s1.channels)}${p('Primary KPIs',s1.kpis)}${f('KPI Targets',s1.kpi_targets)}${f('Campaign Dates',(s1.start_date&&s1.end_date)?s1.start_date+' → '+s1.end_date:'')}${f('Competitors to Watch',s1.competitors)}`)}
+${sec('02','Creative Development',`${f('Core Campaign Message',s2.core_message)}${f('Value Proposition',s2.value_prop)}${f('Pain Points Addressed',s2.pain_points)}${p('Tone of Voice',s2.tone)}${f('Headline Directions',s2.headlines)}${f('Primary CTA',s2.cta_text?(s2.cta_text+(s2.cta_url?' — '+s2.cta_url:'')):'')}${f('Secondary CTA',s2.cta2_text?(s2.cta2_text+(s2.cta2_url?' — '+s2.cta2_url:'')):'')}${p('Assets to Produce',s2.assets)}${f('Visual Style Direction',s2.visual_style)}${f('Content Restrictions',s2.restrictions)}`)}
+${sec('03','Pre-Launch Setup',`${p('Tracking Stack',s3.tracking)}${f('Conversion Events',s3.conversion_events)}${f('UTM Source Format',s3.utm_source)}${f('UTM Medium Format',s3.utm_medium)}${f('UTM Campaign Naming',s3.utm_campaign)}${p('QA Checklist Areas',s3.qa)}${f('Stakeholder Briefing Plan',s3.stakeholder_plan)}${f('Warm-Up Strategy',s3.warmup_type)}${f('Warm-Up Details',s3.warmup_details)}${f('Go / No-Go Criteria',s3.go_nogo)}`)}
+${sec('04','Launch &amp; Activation',`${f('Launch Date',s4.launch_date)}${f('Launch Time',s4.launch_time)}${f('Channel Activation Order',s4.channel_order)}${f('Paid Media Plan',s4.paid_plan)}${f('Organic Content Plan',s4.organic_plan)}${f('Email Launch Sequence',s4.email_plan)}${f('PR &amp; Earned Media Plan',s4.pr_plan)}${f('Team &amp; Channel Owners',s4.team_owners)}${f('Monitoring Plan',s4.monitoring_plan)}${f('Early Signal Thresholds',s4.early_signals)}${f('Escalation Path',s4.escalation)}`)}
+${sec('05','Optimization Framework',`${f('Optimization Cadence',s5.opt_cadence)}${f('A/B Testing — Creative',s5.ab_creative)}${f('A/B Testing — Copy &amp; Messaging',s5.ab_copy)}${f('A/B Testing — Audience',s5.ab_audience)}${f('Statistical Significance',s5.stat_sig)}${f('Budget Reallocation Rules',s5.budget_rules)}${f('Kill Criteria',s5.kill_criteria)}${f('Scale Criteria',s5.scale_criteria)}${f('Landing Page Optimization',s5.lp_optimization)}${f('Audience Refinement Plan',s5.audience_refinement)}`)}
+${sec('06','Reporting &amp; Iteration',`${p('Reporting Cadence',s6.reporting)}${f('Report Recipients',s6.report_recipients)}${f('Reporting Dashboard',s6.dashboard_tool)}${f('Success Definition',s6.success_def)}${f('Attribution Model',s6.attribution_model)}${f('ROI Calculation Method',s6.roi_method)}${f('Post-Campaign Review Format',s6.retro_format)}${f('Strategic Questions',s6.strategic_questions)}${f('Learnings Template',s6.learnings_template)}${f('Next Campaign Trigger',s6.next_cycle)}${f('Asset Archive Plan',s6.asset_archive)}`)}
+</body></html>`;
+}
+
+/* ── Copy brief to clipboard (HTML + plain text fallback) ── */
+async function copyBrief(s1, s2, s3, s4, s5, s6) {
+  const plain = buildBriefPlainText(s1, s2, s3, s4, s5, s6);
+  const html  = buildBriefHtml(s1, s2, s3, s4, s5, s6);
+
+  try {
+    await navigator.clipboard.write([
+      new ClipboardItem({
+        'text/html':  new Blob([html],  { type: 'text/html' }),
+        'text/plain': new Blob([plain], { type: 'text/plain' })
+      })
+    ]);
+  } catch(e) {
+    try { await navigator.clipboard.writeText(plain); }
+    catch(e2) {
+      const ta = document.createElement('textarea');
+      ta.value = plain;
+      ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0;';
+      document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  }
+
+  showToast('Brief copied — <a href="https://docs.google.com/document/create" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;white-space:nowrap;">Open Google Docs ↗</a>');
 }
 
 /* ── Toast notification ── */
@@ -512,7 +563,7 @@ function showToast(message) {
     toast.className = 'wizard-toast';
     document.body.appendChild(toast);
   }
-  toast.textContent = message;
+  toast.innerHTML = message;
   toast.classList.add('show');
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => toast.classList.remove('show'), 5000);
