@@ -1533,6 +1533,99 @@ footer {
   font-size: 14px;
 }
 
+/* Draft edit mode */
+.draft-edit-textarea {
+  width: 100%;
+  min-height: 220px;
+  padding: 12px;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.65;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  resize: vertical;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.draft-edit-textarea:focus {
+  border-color: var(--c1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c1) 15%, transparent);
+}
+
+.edit-hint {
+  font-size: 12px;
+  color: var(--muted);
+  flex: 1;
+}
+
+/* Edited version notice */
+.draft-edited-notice {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--c1);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  font-family: inherit;
+}
+.btn-link:hover { opacity: 0.75; }
+
+/* Refine panel */
+.refine-panel {
+  display: none;
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--c1) 4%, var(--surface));
+}
+.refine-panel.open { display: block; }
+
+.refine-input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  resize: none;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.refine-input:focus {
+  border-color: var(--c1);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--c1) 15%, transparent);
+}
+
+.refine-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.refine-error {
+  flex: 1;
+  font-size: 12px;
+  color: var(--c6);
+  min-height: 16px;
+}
+
 @media (max-width: 600px) {
   .creatives-grid { grid-template-columns: 1fr; }
   .creatives-wrap { padding: 24px 16px 60px; }

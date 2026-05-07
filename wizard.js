@@ -1350,6 +1350,12 @@ function buildCreativesDocHtml(s1, drafts) {
     }
 
     try {
+      // If user has a hand-edited version, use that directly
+      if (draft.editedText) {
+        html += `<p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:12px 14px;border-left:3px solid ${color};border-radius:4px;">${escHtml(draft.editedText)}</p>`;
+        html += `</td></tr></table>`;
+        return;
+      }
       const d = draft.data;
       // Use a simplified text rendering for each asset type
       if (d.emails)   d.emails.forEach((e,i) => { html += docItem(`Email ${i+1}${e.subject ? ' — ' + e.subject : ''}`, [e.preview?'Preview: '+e.preview:'', e.headline?'Headline: '+e.headline:'', e.body||'', e.cta?'CTA: '+e.cta:'', e.visual_direction?'Visual: '+e.visual_direction:''].filter(Boolean).join('\n')); });
@@ -1374,6 +1380,17 @@ function buildCreativesDocHtml(s1, drafts) {
 
   html += `</body></html>`;
   return html;
+}
+
+async function refineAsset(assetKey, currentData, editedText, instruction, ctx) {
+  const system = `You are a creative strategist refining a campaign asset draft.
+The user will provide the current structured draft and an instruction to improve it.
+Return ONLY valid JSON in the exact same structure as the current draft. Apply the instruction precisely.
+Keep all keys present; only modify what the instruction targets.`;
+  const draftStr = editedText
+    ? `Current edited version (plain text — use as context for tone/content):\n${editedText}\n\nOriginal structured draft:\n${JSON.stringify(currentData, null, 2)}`
+    : `Current draft:\n${JSON.stringify(currentData, null, 2)}`;
+  return await callClaude(system, `Campaign context:\n${ctx}\n\nAsset type: ${assetKey}\n\n${draftStr}\n\nInstruction: ${instruction}`, 2000);
 }
 
 async function openCreativesInGoogleDocs(s1, drafts) {
