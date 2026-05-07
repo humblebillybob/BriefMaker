@@ -803,23 +803,9 @@ async function _driveUpload(title, appMime, contentType, content) {
   return res.json();
 }
 
-async function _setDocsPageless(documentId) {
-  const token = await getGoogleToken();
-  const res = await fetch(`https://docs.googleapis.com/v1/documents/${documentId}:batchUpdate`, {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ requests: [{ updateDocumentStyle: { documentStyle: { pageless: true }, fields: 'pageless' } }] })
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    console.warn('Pageless mode skipped:', err?.error?.message || res.status);
-  }
-}
-
 async function openInGoogleDocs(s1, s2, s3, s4, s5, s6) {
   const name = s1.campaign_name || 'Campaign Brief';
   const file = await _driveUpload(name, 'application/vnd.google-apps.document', 'text/html', buildBriefHtml(s1, s2, s3, s4, s5, s6));
-  await _setDocsPageless(file.id).catch(e => console.warn('Pageless skip:', e.message));
   window.open(`https://docs.google.com/document/d/${file.id}/edit`, '_blank');
 }
 
