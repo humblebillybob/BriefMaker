@@ -826,6 +826,13 @@ async function openInGoogleDocs(s1, s2, s3, s4, s5, s6) {
 async function _formatSheet(spreadsheetId) {
   const token = await getGoogleToken();
 
+  // Drive CSV conversion doesn't guarantee sheetId=0 — fetch the real one first
+  const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.sheetId`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  const metaJson = await metaRes.json();
+  const sid = metaJson?.sheets?.[0]?.properties?.sheetId ?? 0;
+
   // Row ranges per section (0-indexed). Must match buildBriefCsv row order exactly.
   // Row 0 = header. S&P: 1-13 (13 rows), Creative: 14-25 (12), Pre-Launch: 26-35 (10),
   // Launch: 36-46 (11), Optimization: 47-56 (10), Reporting: 57-67 (11)
@@ -840,23 +847,23 @@ async function _formatSheet(spreadsheetId) {
 
   const requests = [
     // Dark header row: near-black background, white bold text
-    { repeatCell: { range: { sheetId:0, startRowIndex:0, endRowIndex:1 }, cell: { userEnteredFormat: {
+    { repeatCell: { range: { sheetId:sid, startRowIndex:0, endRowIndex:1 }, cell: { userEnteredFormat: {
       textFormat: { bold:true, foregroundColorStyle: { rgbColor: { red:1, green:1, blue:1 } } },
       backgroundColor: { red:0.118, green:0.161, blue:0.231 }
     }}, fields:'userEnteredFormat(textFormat,backgroundColor)' }},
     // Freeze header row
-    { updateSheetProperties: { properties: { sheetId:0, gridProperties: { frozenRowCount:1 } }, fields:'gridProperties.frozenRowCount' }},
+    { updateSheetProperties: { properties: { sheetId:sid, gridProperties: { frozenRowCount:1 } }, fields:'gridProperties.frozenRowCount' }},
     // Column widths: Section=180, Field=240, Value=520
-    { updateDimensionProperties: { range: { sheetId:0, dimension:'COLUMNS', startIndex:0, endIndex:1 }, properties:{ pixelSize:180 }, fields:'pixelSize' }},
-    { updateDimensionProperties: { range: { sheetId:0, dimension:'COLUMNS', startIndex:1, endIndex:2 }, properties:{ pixelSize:240 }, fields:'pixelSize' }},
-    { updateDimensionProperties: { range: { sheetId:0, dimension:'COLUMNS', startIndex:2, endIndex:3 }, properties:{ pixelSize:520 }, fields:'pixelSize' }},
+    { updateDimensionProperties: { range: { sheetId:sid, dimension:'COLUMNS', startIndex:0, endIndex:1 }, properties:{ pixelSize:180 }, fields:'pixelSize' }},
+    { updateDimensionProperties: { range: { sheetId:sid, dimension:'COLUMNS', startIndex:1, endIndex:2 }, properties:{ pixelSize:240 }, fields:'pixelSize' }},
+    { updateDimensionProperties: { range: { sheetId:sid, dimension:'COLUMNS', startIndex:2, endIndex:3 }, properties:{ pixelSize:520 }, fields:'pixelSize' }},
     // Wrap + top-align value column
-    { repeatCell: { range: { sheetId:0, startColumnIndex:2, endColumnIndex:3 }, cell: { userEnteredFormat: { wrapStrategy:'WRAP', verticalAlignment:'TOP' }}, fields:'userEnteredFormat(wrapStrategy,verticalAlignment)' }},
+    { repeatCell: { range: { sheetId:sid, startColumnIndex:2, endColumnIndex:3 }, cell: { userEnteredFormat: { wrapStrategy:'WRAP', verticalAlignment:'TOP' }}, fields:'userEnteredFormat(wrapStrategy,verticalAlignment)' }},
     // Top-align section + field columns
-    { repeatCell: { range: { sheetId:0, startColumnIndex:0, endColumnIndex:2 }, cell: { userEnteredFormat: { verticalAlignment:'TOP' }}, fields:'userEnteredFormat.verticalAlignment' }},
+    { repeatCell: { range: { sheetId:sid, startColumnIndex:0, endColumnIndex:2 }, cell: { userEnteredFormat: { verticalAlignment:'TOP' }}, fields:'userEnteredFormat.verticalAlignment' }},
     // Section color bands
     ...sectionBands.map(({ start, end, r, g, b }) => ({
-      repeatCell: { range: { sheetId:0, startRowIndex:start, endRowIndex:end }, cell: { userEnteredFormat: { backgroundColor: { red:r, green:g, blue:b } }}, fields:'userEnteredFormat.backgroundColor' }
+      repeatCell: { range: { sheetId:sid, startRowIndex:start, endRowIndex:end }, cell: { userEnteredFormat: { backgroundColor: { red:r, green:g, blue:b } }}, fields:'userEnteredFormat.backgroundColor' }
     })),
   ];
 
