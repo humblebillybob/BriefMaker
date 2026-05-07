@@ -15,7 +15,9 @@
       <span class="topbar-title">Campaign Brief</span>
     </div>
     <div class="topbar-actions brief-actions">
-      <button class="btn btn-sm btn-gdocs" id="gdocs-btn">Copy Brief</button>
+      <button class="btn btn-sm btn-polish" id="polish-btn">✦ Polish</button>
+      <button class="btn btn-sm btn-gdocs" id="gdocs-btn">Open in Google Docs</button>
+      <button class="btn btn-sm btn-sheets" id="sheets-btn">Open in Google Sheets</button>
       <button class="btn btn-sm btn-print" onclick="window.print()">Print / Save PDF</button>
       <button class="btn btn-sm btn-danger" data-action="open-reset">Reset All Data</button>
     </div>
@@ -39,13 +41,18 @@
 <script src="wizard.js"></script>
 <script>
 
-  function buildBrief() {
-    const s1 = Store.load('stage1');
-    const s2 = Store.load('stage2');
-    const s3 = Store.load('stage3');
-    const s4 = Store.load('stage4');
-    const s5 = Store.load('stage5');
-    const s6 = Store.load('stage6');
+  // Holds whichever data set is currently displayed (raw or polished)
+  let _briefData = null;
+
+  function buildBrief(override) {
+    const s1 = override?.s1 || Store.load('stage1');
+    const s2 = override?.s2 || Store.load('stage2');
+    const s3 = override?.s3 || Store.load('stage3');
+    const s4 = override?.s4 || Store.load('stage4');
+    const s5 = override?.s5 || Store.load('stage5');
+    const s6 = override?.s6 || Store.load('stage6');
+
+    _briefData = { s1, s2, s3, s4, s5, s6 };
 
     const hasData = Object.keys(s1).length + Object.keys(s2).length > 0;
 
@@ -163,16 +170,74 @@
         </div>
         ${sections}
       </div>`;
-
-    // Wire Copy Brief button
-    document.getElementById('gdocs-btn').addEventListener('click', () => {
-      copyBrief(s1, s2, s3, s4, s5, s6);
-    });
   }
+
+  // ── Button wiring (once only — handlers always read _briefData) ──
+
+  async function withBtnLoading(id, label, fn) {
+    const btn = document.getElementById(id);
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = label;
+    try { await fn(); }
+    catch(e) {
+      console.error(e);
+      showToast(e.message.includes('not initialised')
+        ? 'Google auth loading — wait a moment and try again.'
+        : 'Could not open Google — check that pop-ups are allowed and try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  }
+
+  document.getElementById('gdocs-btn').addEventListener('click', () => {
+    if (!_briefData) return;
+    const { s1, s2, s3, s4, s5, s6 } = _briefData;
+    withBtnLoading('gdocs-btn', 'Opening…', () => openInGoogleDocs(s1, s2, s3, s4, s5, s6));
+  });
+
+  document.getElementById('sheets-btn').addEventListener('click', () => {
+    if (!_briefData) return;
+    const { s1, s2, s3, s4, s5, s6 } = _briefData;
+    withBtnLoading('sheets-btn', 'Opening…', () => openInGoogleSheets(s1, s2, s3, s4, s5, s6));
+  });
+
+  const polishBtn = document.getElementById('polish-btn');
+
+  polishBtn.addEventListener('click', async () => {
+    // Toggle: if already polished, revert
+    if (polishBtn.classList.contains('polished')) {
+      buildBrief();
+      polishBtn.classList.remove('polished');
+      polishBtn.textContent = '✦ Polish';
+      return;
+    }
+
+    if (!_briefData) return;
+    polishBtn.disabled = true;
+    polishBtn.textContent = '✦ Polishing…';
+
+    try {
+      const { s1, s2, s3, s4, s5, s6 } = _briefData;
+      const polished = await polishBrief(s1, s2, s3, s4, s5, s6);
+      buildBrief(polished);
+      polishBtn.classList.add('polished');
+      polishBtn.textContent = '✦ Polished — revert';
+    } catch(e) {
+      showToast(e.message === 'NO_API_KEY'
+        ? 'No API key — click ⚙ to add your Anthropic key.'
+        : 'Polish failed — check your connection and try again.');
+      polishBtn.textContent = '✦ Polish';
+    } finally {
+      polishBtn.disabled = false;
+    }
+  });
 
   buildBrief();
   initResetModal();
 
 </script>
+<script src="https://accounts.google.com/gsi/client" async onload="initGoogleAuth()"></script>
 </body>
 </html>

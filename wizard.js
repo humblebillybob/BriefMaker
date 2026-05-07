@@ -116,7 +116,7 @@ function initStage(config) {
 const CLAUDE_MODEL = 'claude-sonnet-4-5';
 
 /* Low-level API call — returns parsed JSON or throws */
-async function callClaude(systemPrompt, userMessage) {
+async function callClaude(systemPrompt, userMessage, maxTokens = 4096) {
   const key = ApiKey.get();
   if (!key) throw new Error('NO_API_KEY');
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -129,7 +129,7 @@ async function callClaude(systemPrompt, userMessage) {
     },
     body: JSON.stringify({
       model: CLAUDE_MODEL,
-      max_tokens: 4096,
+      max_tokens: maxTokens,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }]
     })
@@ -484,24 +484,121 @@ ${'─'.repeat(60)}
 ${pills('Reporting Cadence', s6.reporting)}${field('Report Recipients', s6.report_recipients)}${field('Reporting Dashboard', s6.dashboard_tool)}${field('Success Definition', s6.success_def)}${field('Attribution Model', s6.attribution_model)}${field('ROI Calculation Method', s6.roi_method)}${field('Post-Campaign Review Format', s6.retro_format)}${field('Strategic Questions', s6.strategic_questions)}${field('Learnings Template', s6.learnings_template)}${field('Next Campaign Trigger', s6.next_cycle)}${field('Asset Archive Plan', s6.asset_archive)}`;
 }
 
+/* ── CSV export for Google Sheets ── */
+function buildBriefCsv(s1, s2, s3, s4, s5, s6) {
+  const splitVal   = s1.budget_split || '70';
+  const splitLabel = splitVal + '% Media / ' + (100 - parseInt(splitVal)) + '% Production';
+
+  function e(v) {
+    const s = String(v || '').replace(/\r?\n/g, ' ').trim();
+    return (s.includes(',') || s.includes('"')) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+  function a(v) { return e((v && v.length) ? v.join('; ') : ''); }
+
+  const rows = [
+    ['Section', 'Field', 'Value'],
+    ['Strategy & Planning','Campaign Name',e(s1.campaign_name)],
+    ['Strategy & Planning','Campaign Objective',e(s1.campaign_objective)],
+    ['Strategy & Planning','Objective Detail',e(s1.objective_detail)],
+    ['Strategy & Planning','Target Audience',e(s1.target_audience)],
+    ['Strategy & Planning','Audience Size',e(s1.audience_size)],
+    ['Strategy & Planning','Total Budget',e(s1.budget)],
+    ['Strategy & Planning','Budget Split',e(splitLabel)],
+    ['Strategy & Planning','Channel Mix',a(s1.channels)],
+    ['Strategy & Planning','Primary KPIs',a(s1.kpis)],
+    ['Strategy & Planning','KPI Targets',e(s1.kpi_targets)],
+    ['Strategy & Planning','Start Date',e(s1.start_date)],
+    ['Strategy & Planning','End Date',e(s1.end_date)],
+    ['Strategy & Planning','Competitors to Watch',e(s1.competitors)],
+    ['Creative Development','Core Campaign Message',e(s2.core_message)],
+    ['Creative Development','Value Proposition',e(s2.value_prop)],
+    ['Creative Development','Pain Points Addressed',e(s2.pain_points)],
+    ['Creative Development','Tone of Voice',a(s2.tone)],
+    ['Creative Development','Headline Directions',e(s2.headlines)],
+    ['Creative Development','Primary CTA Text',e(s2.cta_text)],
+    ['Creative Development','Primary CTA URL',e(s2.cta_url)],
+    ['Creative Development','Secondary CTA Text',e(s2.cta2_text)],
+    ['Creative Development','Secondary CTA URL',e(s2.cta2_url)],
+    ['Creative Development','Assets to Produce',a(s2.assets)],
+    ['Creative Development','Visual Style Direction',e(s2.visual_style)],
+    ['Creative Development','Content Restrictions',e(s2.restrictions)],
+    ['Pre-Launch','Tracking Stack',a(s3.tracking)],
+    ['Pre-Launch','Conversion Events',e(s3.conversion_events)],
+    ['Pre-Launch','UTM Source Format',e(s3.utm_source)],
+    ['Pre-Launch','UTM Medium Format',e(s3.utm_medium)],
+    ['Pre-Launch','UTM Campaign Naming',e(s3.utm_campaign)],
+    ['Pre-Launch','QA Checklist Areas',a(s3.qa)],
+    ['Pre-Launch','Stakeholder Briefing Plan',e(s3.stakeholder_plan)],
+    ['Pre-Launch','Warm-Up Strategy',e(s3.warmup_type)],
+    ['Pre-Launch','Warm-Up Details',e(s3.warmup_details)],
+    ['Pre-Launch','Go / No-Go Criteria',e(s3.go_nogo)],
+    ['Launch & Activation','Launch Date',e(s4.launch_date)],
+    ['Launch & Activation','Launch Time',e(s4.launch_time)],
+    ['Launch & Activation','Channel Activation Order',e(s4.channel_order)],
+    ['Launch & Activation','Paid Media Plan',e(s4.paid_plan)],
+    ['Launch & Activation','Organic Content Plan',e(s4.organic_plan)],
+    ['Launch & Activation','Email Launch Sequence',e(s4.email_plan)],
+    ['Launch & Activation','PR & Earned Media Plan',e(s4.pr_plan)],
+    ['Launch & Activation','Team & Channel Owners',e(s4.team_owners)],
+    ['Launch & Activation','Monitoring Plan',e(s4.monitoring_plan)],
+    ['Launch & Activation','Early Signal Thresholds',e(s4.early_signals)],
+    ['Launch & Activation','Escalation Path',e(s4.escalation)],
+    ['Optimization','Optimization Cadence',e(s5.opt_cadence)],
+    ['Optimization','A/B Testing — Creative',e(s5.ab_creative)],
+    ['Optimization','A/B Testing — Copy & Messaging',e(s5.ab_copy)],
+    ['Optimization','A/B Testing — Audience',e(s5.ab_audience)],
+    ['Optimization','Statistical Significance',e(s5.stat_sig)],
+    ['Optimization','Budget Reallocation Rules',e(s5.budget_rules)],
+    ['Optimization','Kill Criteria',e(s5.kill_criteria)],
+    ['Optimization','Scale Criteria',e(s5.scale_criteria)],
+    ['Optimization','Landing Page Optimization',e(s5.lp_optimization)],
+    ['Optimization','Audience Refinement Plan',e(s5.audience_refinement)],
+    ['Reporting & Iteration','Reporting Cadence',a(s6.reporting)],
+    ['Reporting & Iteration','Report Recipients',e(s6.report_recipients)],
+    ['Reporting & Iteration','Reporting Dashboard',e(s6.dashboard_tool)],
+    ['Reporting & Iteration','Success Definition',e(s6.success_def)],
+    ['Reporting & Iteration','Attribution Model',e(s6.attribution_model)],
+    ['Reporting & Iteration','ROI Calculation Method',e(s6.roi_method)],
+    ['Reporting & Iteration','Post-Campaign Review Format',e(s6.retro_format)],
+    ['Reporting & Iteration','Strategic Questions',e(s6.strategic_questions)],
+    ['Reporting & Iteration','Learnings Template',e(s6.learnings_template)],
+    ['Reporting & Iteration','Next Campaign Trigger',e(s6.next_cycle)],
+    ['Reporting & Iteration','Asset Archive Plan',e(s6.asset_archive)],
+  ];
+
+  return rows.map(r => r.join(',')).join('\r\n');
+}
+
+function downloadCsv(s1, s2, s3, s4, s5, s6) {
+  const name = (s1.campaign_name || 'Campaign Brief').replace(/[^\w\s-]/g, '').trim() || 'Campaign Brief';
+  const csv  = buildBriefCsv(s1, s2, s3, s4, s5, s6);
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = name + '.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+  showToast('Spreadsheet downloaded — <a href="https://sheets.new" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">Open Google Sheets ↗</a>');
+}
+
 /* ── HTML brief for clipboard (pastes cleanly into Google Docs) ── */
 function buildBriefHtml(s1, s2, s3, s4, s5, s6) {
   const name     = s1.campaign_name || 'Untitled Campaign';
   const splitVal = s1.budget_split  || '70';
   const splitLabel = splitVal + '% Media / ' + (100 - parseInt(splitVal)) + '% Production';
 
-  const lbl = 'display:block;font-size:10px;color:#6b21a8;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:10px 0 2px;font-family:Arial,sans-serif;';
-  const val = 'display:block;font-size:13px;color:#111;margin:0 0 6px;line-height:1.6;font-family:Arial,sans-serif;';
+  const lbl  = 'font-size:10px;color:#6b21a8;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:10px 0 2px;font-family:Arial,sans-serif;';
+  const val  = 'font-size:13px;color:#111;margin:0 0 6px;line-height:1.6;font-family:Arial,sans-serif;';
   const pill = 'display:inline-block;font-size:11px;background:#f3e8ff;color:#6b21a8;border:1px solid #ddd6fe;border-radius:4px;padding:2px 10px;margin:2px 2px 4px;font-family:Arial,sans-serif;';
-  const h2 = 'font-size:15px;color:#111;border-bottom:1px solid #e5e7eb;padding-bottom:5px;margin:22px 0 10px;font-family:Arial,sans-serif;';
+  const h2   = 'font-size:15px;color:#111;border-bottom:1px solid #e5e7eb;padding-bottom:5px;margin:22px 0 10px;font-family:Arial,sans-serif;';
 
   function f(label, value) {
     if (!value || !String(value).trim()) return '';
-    return `<span style="${lbl}">${label}</span><span style="${val}">${String(value).replace(/\n/g,'<br>')}</span>`;
+    return `<p style="${lbl}">${label}</p><p style="${val}">${String(value).replace(/\n/g,'<br>')}</p>`;
   }
   function p(label, arr) {
     if (!arr || !arr.length) return '';
-    return `<span style="${lbl}">${label}</span><div style="margin-bottom:8px;">${arr.map(v=>`<span style="${pill}">${v}</span>`).join('')}</div>`;
+    return `<p style="${lbl}">${label}</p><p style="margin:0 0 8px;">${arr.map(v=>`<span style="${pill}">${v}</span>`).join(' ')}</p>`;
   }
   function sec(num, title, body) {
     return `<h2 style="${h2}">${num} — ${title}</h2>${body}`;
@@ -567,6 +664,112 @@ function showToast(message) {
   toast.classList.add('show');
   clearTimeout(toast._timer);
   toast._timer = setTimeout(() => toast.classList.remove('show'), 5000);
+}
+
+/* ── Google OAuth + Drive export ── */
+const GOOGLE_CLIENT_ID = '610429325492-bqi1tbv2nn3kscen3fkgcqnlbdru8ftb.apps.googleusercontent.com';
+let _gTokenClient = null;
+let _gAccessToken = null;
+let _gTokenExpiry  = 0;
+
+function initGoogleAuth() {
+  if (!window.google?.accounts?.oauth2) return;
+  _gTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets',
+    callback: '' // assigned per request
+  });
+}
+
+function getGoogleToken() {
+  return new Promise((resolve, reject) => {
+    if (_gAccessToken && Date.now() < _gTokenExpiry) { resolve(_gAccessToken); return; }
+    if (!_gTokenClient) { reject(new Error('Google auth not initialised — try again in a moment.')); return; }
+    _gTokenClient.callback = (resp) => {
+      if (resp.error) { reject(new Error(resp.error)); return; }
+      _gAccessToken = resp.access_token;
+      _gTokenExpiry  = Date.now() + (resp.expires_in - 60) * 1000;
+      resolve(_gAccessToken);
+    };
+    _gTokenClient.requestAccessToken({ prompt: '' });
+  });
+}
+
+async function _driveUpload(title, appMime, contentType, content) {
+  const token    = await getGoogleToken();
+  const boundary = 'BriefMaker_' + Date.now();
+  const meta     = JSON.stringify({ name: title, mimeType: appMime });
+  const body     = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${meta}\r\n--${boundary}\r\nContent-Type: ${contentType}\r\n\r\n${content}\r\n--${boundary}--`;
+  const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': `multipart/related; boundary="${boundary}"` },
+    body
+  });
+  if (!res.ok) throw new Error('Drive API error ' + res.status);
+  return res.json();
+}
+
+async function openInGoogleDocs(s1, s2, s3, s4, s5, s6) {
+  const name = s1.campaign_name || 'Campaign Brief';
+  const file = await _driveUpload(name, 'application/vnd.google-apps.document', 'text/html', buildBriefHtml(s1, s2, s3, s4, s5, s6));
+  window.open(`https://docs.google.com/document/d/${file.id}/edit`, '_blank');
+}
+
+async function _formatSheet(spreadsheetId) {
+  const token = await getGoogleToken();
+  const requests = [
+    // Bold + freeze header row
+    { repeatCell: { range: { sheetId: 0, startRowIndex: 0, endRowIndex: 1 }, cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColor: { red: 0.96, green: 0.96, blue: 0.96 } } }, fields: 'userEnteredFormat(textFormat,backgroundColor)' } },
+    { updateSheetProperties: { properties: { sheetId: 0, gridProperties: { frozenRowCount: 1 } }, fields: 'gridProperties.frozenRowCount' } },
+    // Column widths: Section (col 0) = 180px, Field (col 1) = 240px, Value (col 2) = 520px
+    { updateDimensionProperties: { range: { sheetId: 0, dimension: 'COLUMNS', startIndex: 0, endIndex: 1 }, properties: { pixelSize: 180 }, fields: 'pixelSize' } },
+    { updateDimensionProperties: { range: { sheetId: 0, dimension: 'COLUMNS', startIndex: 1, endIndex: 2 }, properties: { pixelSize: 240 }, fields: 'pixelSize' } },
+    { updateDimensionProperties: { range: { sheetId: 0, dimension: 'COLUMNS', startIndex: 2, endIndex: 3 }, properties: { pixelSize: 520 }, fields: 'pixelSize' } },
+    // Wrap text in value column
+    { repeatCell: { range: { sheetId: 0, startColumnIndex: 2, endColumnIndex: 3 }, cell: { userEnteredFormat: { wrapStrategy: 'WRAP', verticalAlignment: 'TOP' } }, fields: 'userEnteredFormat(wrapStrategy,verticalAlignment)' } },
+    // Vertical align top for section + field columns
+    { repeatCell: { range: { sheetId: 0, startColumnIndex: 0, endColumnIndex: 2 }, cell: { userEnteredFormat: { verticalAlignment: 'TOP' } }, fields: 'userEnteredFormat.verticalAlignment' } },
+  ];
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requests })
+  });
+}
+
+async function openInGoogleSheets(s1, s2, s3, s4, s5, s6) {
+  const name = (s1.campaign_name || 'Campaign Brief').replace(/[^\w\s-]/g, '').trim() || 'Campaign Brief';
+  const file = await _driveUpload(name, 'application/vnd.google-apps.spreadsheet', 'text/csv', buildBriefCsv(s1, s2, s3, s4, s5, s6));
+  await _formatSheet(file.id).catch(() => {}); // best-effort — don't block opening if format fails
+  window.open(`https://docs.google.com/spreadsheets/d/${file.id}/edit`, '_blank');
+}
+
+/* ── Brief polish — tighten for at-a-glance consumption ── */
+async function polishStage(stageName, data) {
+  const system = `You are editing one stage of a marketing campaign brief for at-a-glance readability.
+Same information — leaner, cleaner format. Apply these rules to every non-empty string value:
+• Prose longer than ~15 words → rewrite as 3–5 tight bullets, each starting with "• ", joined by \\n
+• Trim filler words — fewer words, same meaning
+• Sentence case throughout
+• Values already under 12 words: leave exactly as-is
+• Array fields, dates, numbers, URLs: leave completely unchanged
+• Empty strings stay empty
+
+Return ONLY valid JSON with the exact same keys. No markdown fences, no commentary.`;
+
+  return await callClaude(system, `Stage: ${stageName}\n\n${JSON.stringify(data, null, 2)}`, 2048);
+}
+
+async function polishBrief(s1, s2, s3, s4, s5, s6) {
+  const [r1, r2, r3, r4, r5, r6] = await Promise.all([
+    polishStage('stage1', s1),
+    polishStage('stage2', s2),
+    polishStage('stage3', s3),
+    polishStage('stage4', s4),
+    polishStage('stage5', s5),
+    polishStage('stage6', s6),
+  ]);
+  return { s1: r1, s2: r2, s3: r3, s4: r4, s5: r5, s6: r6 };
 }
 
 /* ── Reset modal ── */
