@@ -583,45 +583,139 @@ function downloadCsv(s1, s2, s3, s4, s5, s6) {
 
 /* ── HTML brief for clipboard (pastes cleanly into Google Docs) ── */
 function buildBriefHtml(s1, s2, s3, s4, s5, s6) {
-  const name     = s1.campaign_name || 'Untitled Campaign';
-  const splitVal = s1.budget_split  || '70';
+  const name = s1.campaign_name || 'Untitled Campaign';
+  const splitVal = s1.budget_split || '70';
   const splitLabel = splitVal + '% Media / ' + (100 - parseInt(splitVal)) + '% Production';
 
-  const lbl  = 'font-size:10px;color:#6b21a8;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin:10px 0 2px;font-family:Arial,sans-serif;';
-  const val  = 'font-size:13px;color:#111;margin:0 0 6px;line-height:1.6;font-family:Arial,sans-serif;';
-  const pill = 'display:inline-block;font-size:11px;background:#f3e8ff;color:#6b21a8;border:1px solid #ddd6fe;border-radius:4px;padding:2px 10px;margin:2px 2px 4px;font-family:Arial,sans-serif;';
-  const h2   = 'font-size:15px;color:#111;border-bottom:1px solid #e5e7eb;padding-bottom:5px;margin:22px 0 10px;font-family:Arial,sans-serif;';
+  // Section color palette matching the web UI
+  const COLORS = ['#b89af5','#70a5f9','#3dd8e8','#4ade95','#fbbf50','#fb7185'];
+  const TINTS  = ['#f6f3fe','#eef4fe','#e8fafc','#e9fbf2','#fef7ea','#feeef0'];
+  const TITLES = [
+    'Strategy &amp; <em>Planning</em>',
+    'Creative <em>Development</em>',
+    '<em>Pre-Launch</em> Setup',
+    'Launch &amp; <em>Activation</em>',
+    '<em>Optimization</em> Framework',
+    'Reporting &amp; <em>Iteration</em>',
+  ];
 
-  function f(label, value) {
-    if (!value || !String(value).trim()) return '';
-    return `<p style="${lbl}">${label}</p><p style="${val}">${String(value).replace(/\n/g,'<br>')}</p>`;
-  }
-  function p(label, arr) {
-    if (!arr || !arr.length) return '';
-    return `<p style="${lbl}">${label}</p><p style="margin:0 0 8px;">${arr.map(v=>`<span style="${pill}">${v}</span>`).join(' ')}</p>`;
-  }
-  function sec(num, title, body) {
-    return `<h2 style="${h2}">${num} — ${title}</h2>${body}`;
+  // Factory: returns {f, p, r2, wrap} scoped to this section's color
+  function makeSec(i) {
+    const color = COLORS[i], tint = TINTS[i], num = String(i+1).padStart(2,'0'), title = TITLES[i];
+    const lbl = `font-size:9px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:.12em;margin:0 0 4px;font-family:Arial,sans-serif;`;
+    const val = `font-size:13px;color:#111;line-height:1.65;margin:0;font-family:Arial,sans-serif;`;
+    const fieldTd = `padding:10px 18px 12px;border-left:3px solid ${color};border-top:1px solid #f0f0f0;vertical-align:top;`;
+
+    function f(label, value) {
+      if (!value || !String(value).trim()) return '';
+      return `<tr><td colspan="2" style="${fieldTd}"><p style="${lbl}">${label}</p><p style="${val}">${String(value).replace(/\n/g,'<br>')}</p></td></tr>`;
+    }
+    function p(label, arr) {
+      if (!arr || !arr.length) return '';
+      const pills = arr.map(v => `<span style="display:inline-block;font-size:11px;color:${color};border:1px solid ${color};padding:2px 9px;margin:0 4px 3px 0;font-family:Arial,sans-serif;">${v}</span>`).join('');
+      return `<tr><td colspan="2" style="${fieldTd}"><p style="${lbl}">${label}</p><p style="margin:2px 0 0;font-family:Arial,sans-serif;">${pills}</p></td></tr>`;
+    }
+    function r2(l1, v1, l2, v2) {
+      const has1 = v1 && String(v1).trim(), has2 = v2 && String(v2).trim();
+      if (!has1 && !has2) return '';
+      const td2a = `width:50%;padding:10px 14px 12px 18px;border-left:3px solid ${color};border-top:1px solid #f0f0f0;vertical-align:top;`;
+      const td2b = `width:50%;padding:10px 18px 12px 14px;border-top:1px solid #f0f0f0;vertical-align:top;`;
+      const cell = (l, v, sty) => !v || !String(v).trim() ? `<td style="${sty}"></td>` :
+        `<td style="${sty}"><p style="${lbl}">${l}</p><p style="${val}">${String(v).replace(/\n/g,'<br>')}</p></td>`;
+      return `<tr>${cell(l1,v1,td2a)}${cell(l2,v2,td2b)}</tr>`;
+    }
+    function wrap(rows) {
+      return `<table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin:0 0 26px;border:1px solid #e5e7eb;border-top:3px solid ${color};">` +
+        `<tr><td colspan="2" style="background:${tint};padding:10px 18px;">` +
+        `<table cellpadding="0" cellspacing="0"><tr>` +
+        `<td style="width:28px;height:28px;border:2px solid ${color};text-align:center;vertical-align:middle;font-size:10px;font-weight:700;color:${color};font-family:Arial,sans-serif;">${num}</td>` +
+        `<td style="padding-left:10px;font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#111;">${title}</td>` +
+        `</tr></table></td></tr>${rows}</table>`;
+    }
+    return { f, p, r2, wrap };
   }
 
+  const S = [0,1,2,3,4,5].map(makeSec);
   const meta = [
-    s1.campaign_objective ? `<strong>Objective:</strong> ${s1.campaign_objective}` : '',
-    s1.budget             ? `<strong>Budget:</strong> ${s1.budget}` : '',
-    (s1.start_date && s1.end_date) ? `<strong>Dates:</strong> ${s1.start_date} → ${s1.end_date}` : '',
-  ].filter(Boolean).join(' &nbsp;·&nbsp; ');
+    s1.campaign_objective ? `<b>Objective:</b> ${s1.campaign_objective}` : '',
+    s1.budget             ? `<b>Budget:</b> ${s1.budget}` : '',
+    (s1.start_date && s1.end_date) ? `<b>Dates:</b> ${s1.start_date} → ${s1.end_date}` : '',
+  ].filter(Boolean).join(' &nbsp;&middot;&nbsp; ');
+  const d = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
 
-  return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#111;background:#fff;max-width:780px;margin:0;padding:28px;">
-<h1 style="font-size:22px;color:#111;margin:0 0 4px;font-family:Georgia,serif;">${name}</h1>
-<p style="font-size:11px;color:#777;margin:0 0 ${meta?'8px':'20px'};">Campaign Brief — ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
-${meta?`<p style="font-size:12px;color:#555;margin:0 0 18px;">${meta}</p>`:''}
-<hr style="border:none;border-top:2px solid #e5e7eb;margin:0 0 4px;">
-${sec('01','Strategy &amp; Planning',`${f('Campaign Objective',s1.campaign_objective)}${f('Objective Detail',s1.objective_detail)}${f('Target Audience',s1.target_audience)}${f('Audience Size',s1.audience_size)}${f('Total Budget',s1.budget)}${f('Budget Split',splitLabel)}${p('Channel Mix',s1.channels)}${p('Primary KPIs',s1.kpis)}${f('KPI Targets',s1.kpi_targets)}${f('Campaign Dates',(s1.start_date&&s1.end_date)?s1.start_date+' → '+s1.end_date:'')}${f('Competitors to Watch',s1.competitors)}`)}
-${sec('02','Creative Development',`${f('Core Campaign Message',s2.core_message)}${f('Value Proposition',s2.value_prop)}${f('Pain Points Addressed',s2.pain_points)}${p('Tone of Voice',s2.tone)}${f('Headline Directions',s2.headlines)}${f('Primary CTA',s2.cta_text?(s2.cta_text+(s2.cta_url?' — '+s2.cta_url:'')):'')}${f('Secondary CTA',s2.cta2_text?(s2.cta2_text+(s2.cta2_url?' — '+s2.cta2_url:'')):'')}${p('Assets to Produce',s2.assets)}${f('Visual Style Direction',s2.visual_style)}${f('Content Restrictions',s2.restrictions)}`)}
-${sec('03','Pre-Launch Setup',`${p('Tracking Stack',s3.tracking)}${f('Conversion Events',s3.conversion_events)}${f('UTM Source Format',s3.utm_source)}${f('UTM Medium Format',s3.utm_medium)}${f('UTM Campaign Naming',s3.utm_campaign)}${p('QA Checklist Areas',s3.qa)}${f('Stakeholder Briefing Plan',s3.stakeholder_plan)}${f('Warm-Up Strategy',s3.warmup_type)}${f('Warm-Up Details',s3.warmup_details)}${f('Go / No-Go Criteria',s3.go_nogo)}`)}
-${sec('04','Launch &amp; Activation',`${f('Launch Date',s4.launch_date)}${f('Launch Time',s4.launch_time)}${f('Channel Activation Order',s4.channel_order)}${f('Paid Media Plan',s4.paid_plan)}${f('Organic Content Plan',s4.organic_plan)}${f('Email Launch Sequence',s4.email_plan)}${f('PR &amp; Earned Media Plan',s4.pr_plan)}${f('Team &amp; Channel Owners',s4.team_owners)}${f('Monitoring Plan',s4.monitoring_plan)}${f('Early Signal Thresholds',s4.early_signals)}${f('Escalation Path',s4.escalation)}`)}
-${sec('05','Optimization Framework',`${f('Optimization Cadence',s5.opt_cadence)}${f('A/B Testing — Creative',s5.ab_creative)}${f('A/B Testing — Copy &amp; Messaging',s5.ab_copy)}${f('A/B Testing — Audience',s5.ab_audience)}${f('Statistical Significance',s5.stat_sig)}${f('Budget Reallocation Rules',s5.budget_rules)}${f('Kill Criteria',s5.kill_criteria)}${f('Scale Criteria',s5.scale_criteria)}${f('Landing Page Optimization',s5.lp_optimization)}${f('Audience Refinement Plan',s5.audience_refinement)}`)}
-${sec('06','Reporting &amp; Iteration',`${p('Reporting Cadence',s6.reporting)}${f('Report Recipients',s6.report_recipients)}${f('Reporting Dashboard',s6.dashboard_tool)}${f('Success Definition',s6.success_def)}${f('Attribution Model',s6.attribution_model)}${f('ROI Calculation Method',s6.roi_method)}${f('Post-Campaign Review Format',s6.retro_format)}${f('Strategic Questions',s6.strategic_questions)}${f('Learnings Template',s6.learnings_template)}${f('Next Campaign Trigger',s6.next_cycle)}${f('Asset Archive Plan',s6.asset_archive)}`)}
-</body></html>`;
+  const sec1 = S[0].wrap(
+    S[0].f('Campaign Objective', s1.campaign_objective) +
+    S[0].f('Objective Detail',   s1.objective_detail) +
+    S[0].f('Target Audience',    s1.target_audience) +
+    S[0].r2('Audience Size', s1.audience_size, 'Total Budget', s1.budget) +
+    S[0].r2('Budget Split', splitLabel, 'Campaign Dates', (s1.start_date&&s1.end_date)?s1.start_date+' → '+s1.end_date:'') +
+    S[0].p('Channel Mix',  s1.channels) +
+    S[0].p('Primary KPIs', s1.kpis) +
+    S[0].f('KPI Targets',  s1.kpi_targets) +
+    S[0].f('Competitors to Watch', s1.competitors));
+
+  const sec2 = S[1].wrap(
+    S[1].f('Core Campaign Message', s2.core_message) +
+    S[1].f('Value Proposition',     s2.value_prop) +
+    S[1].f('Pain Points Addressed', s2.pain_points) +
+    S[1].p('Tone of Voice', s2.tone) +
+    S[1].f('Headline Directions', s2.headlines) +
+    S[1].r2('Primary CTA', s2.cta_text?(s2.cta_text+(s2.cta_url?' — '+s2.cta_url:'')):'', 'Secondary CTA', s2.cta2_text?(s2.cta2_text+(s2.cta2_url?' — '+s2.cta2_url:'')):'') +
+    S[1].p('Assets to Produce', s2.assets) +
+    S[1].f('Visual Style Direction', s2.visual_style) +
+    S[1].f('Content Restrictions',   s2.restrictions));
+
+  const sec3 = S[2].wrap(
+    S[2].p('Tracking Stack', s3.tracking) +
+    S[2].f('Conversion Events', s3.conversion_events) +
+    S[2].r2('UTM Source Format', s3.utm_source, 'UTM Medium Format', s3.utm_medium) +
+    S[2].f('UTM Campaign Naming', s3.utm_campaign) +
+    S[2].p('QA Checklist Areas', s3.qa) +
+    S[2].f('Stakeholder Briefing Plan', s3.stakeholder_plan) +
+    S[2].r2('Warm-Up Strategy', s3.warmup_type, 'Warm-Up Details', s3.warmup_details) +
+    S[2].f('Go / No-Go Criteria', s3.go_nogo));
+
+  const sec4 = S[3].wrap(
+    S[3].r2('Launch Date', s4.launch_date, 'Launch Time', s4.launch_time) +
+    S[3].f('Channel Activation Order',       s4.channel_order) +
+    S[3].f('Paid Media Plan',                s4.paid_plan) +
+    S[3].f('Organic Content Plan',           s4.organic_plan) +
+    S[3].f('Email Launch Sequence',          s4.email_plan) +
+    S[3].f('PR &amp; Earned Media Plan',     s4.pr_plan) +
+    S[3].f('Team &amp; Channel Owners',      s4.team_owners) +
+    S[3].f('Monitoring Plan (First 72 hrs)', s4.monitoring_plan) +
+    S[3].f('Early Signal Thresholds',        s4.early_signals) +
+    S[3].f('Escalation Path',                s4.escalation));
+
+  const sec5 = S[4].wrap(
+    S[4].f('Optimization Cadence',               s5.opt_cadence) +
+    S[4].f('A/B Testing — Creative',             s5.ab_creative) +
+    S[4].f('A/B Testing — Copy &amp; Messaging', s5.ab_copy) +
+    S[4].f('A/B Testing — Audience',             s5.ab_audience) +
+    S[4].f('Statistical Significance',           s5.stat_sig) +
+    S[4].f('Budget Reallocation Rules',          s5.budget_rules) +
+    S[4].r2('Kill Criteria', s5.kill_criteria, 'Scale Criteria', s5.scale_criteria) +
+    S[4].f('Landing Page Optimization', s5.lp_optimization) +
+    S[4].f('Audience Refinement Plan',  s5.audience_refinement));
+
+  const sec6 = S[5].wrap(
+    S[5].p('Reporting Cadence', s6.reporting) +
+    S[5].f('Report Recipients',   s6.report_recipients) +
+    S[5].f('Reporting Dashboard', s6.dashboard_tool) +
+    S[5].f('Success Definition',  s6.success_def) +
+    S[5].r2('Attribution Model', s6.attribution_model, 'Post-Campaign Review Format', s6.retro_format) +
+    S[5].f('ROI Calculation Method', s6.roi_method) +
+    S[5].f('Strategic Questions',    s6.strategic_questions) +
+    S[5].f('Learnings Template',     s6.learnings_template) +
+    S[5].r2('Next Campaign Trigger', s6.next_cycle, 'Asset Archive Plan', s6.asset_archive));
+
+  return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;color:#111;background:#fff;max-width:760px;margin:0;padding:32px 28px;">` +
+    `<h1 style="font-family:Georgia,'Times New Roman',serif;font-size:26px;font-style:italic;font-weight:400;color:#111;margin:0 0 6px;">${name}</h1>` +
+    `<p style="font-size:11px;color:#999;margin:0 0 ${meta?'10':'22'}px;font-family:Arial,sans-serif;">Campaign Brief — ${d}</p>` +
+    (meta ? `<p style="font-size:12px;color:#555;margin:0 0 20px;font-family:Arial,sans-serif;">${meta}</p>` : '') +
+    `<hr style="border:none;border-top:2px solid #e5e7eb;margin:0 0 26px;">` +
+    sec1 + sec2 + sec3 + sec4 + sec5 + sec6 +
+    `</body></html>`;
 }
 
 /* ── Copy brief to clipboard (HTML + plain text fallback) ── */
@@ -717,30 +811,60 @@ async function openInGoogleDocs(s1, s2, s3, s4, s5, s6) {
 
 async function _formatSheet(spreadsheetId) {
   const token = await getGoogleToken();
-  const requests = [
-    // Bold + freeze header row
-    { repeatCell: { range: { sheetId: 0, startRowIndex: 0, endRowIndex: 1 }, cell: { userEnteredFormat: { textFormat: { bold: true }, backgroundColor: { red: 0.96, green: 0.96, blue: 0.96 } } }, fields: 'userEnteredFormat(textFormat,backgroundColor)' } },
-    { updateSheetProperties: { properties: { sheetId: 0, gridProperties: { frozenRowCount: 1 } }, fields: 'gridProperties.frozenRowCount' } },
-    // Column widths: Section (col 0) = 180px, Field (col 1) = 240px, Value (col 2) = 520px
-    { updateDimensionProperties: { range: { sheetId: 0, dimension: 'COLUMNS', startIndex: 0, endIndex: 1 }, properties: { pixelSize: 180 }, fields: 'pixelSize' } },
-    { updateDimensionProperties: { range: { sheetId: 0, dimension: 'COLUMNS', startIndex: 1, endIndex: 2 }, properties: { pixelSize: 240 }, fields: 'pixelSize' } },
-    { updateDimensionProperties: { range: { sheetId: 0, dimension: 'COLUMNS', startIndex: 2, endIndex: 3 }, properties: { pixelSize: 520 }, fields: 'pixelSize' } },
-    // Wrap text in value column
-    { repeatCell: { range: { sheetId: 0, startColumnIndex: 2, endColumnIndex: 3 }, cell: { userEnteredFormat: { wrapStrategy: 'WRAP', verticalAlignment: 'TOP' } }, fields: 'userEnteredFormat(wrapStrategy,verticalAlignment)' } },
-    // Vertical align top for section + field columns
-    { repeatCell: { range: { sheetId: 0, startColumnIndex: 0, endColumnIndex: 2 }, cell: { userEnteredFormat: { verticalAlignment: 'TOP' } }, fields: 'userEnteredFormat.verticalAlignment' } },
+
+  // Row ranges per section (0-indexed). Must match buildBriefCsv row order exactly.
+  // Row 0 = header. S&P: 1-13 (13 rows), Creative: 14-25 (12), Pre-Launch: 26-35 (10),
+  // Launch: 36-46 (11), Optimization: 47-56 (10), Reporting: 57-67 (11)
+  const sectionBands = [
+    { start:1,  end:14, r:0.965, g:0.953, b:0.996 },  // #f6f3fe purple tint
+    { start:14, end:26, r:0.933, g:0.957, b:0.996 },  // #eef4fe blue tint
+    { start:26, end:36, r:0.910, g:0.980, b:0.988 },  // #e8fafc teal tint
+    { start:36, end:47, r:0.914, g:0.984, b:0.949 },  // #e9fbf2 green tint
+    { start:47, end:57, r:0.996, g:0.969, b:0.918 },  // #fef7ea amber tint
+    { start:57, end:68, r:0.996, g:0.933, b:0.941 },  // #feeef0 pink tint
   ];
-  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+
+  const requests = [
+    // Dark header row: near-black background, white bold text
+    { repeatCell: { range: { sheetId:0, startRowIndex:0, endRowIndex:1 }, cell: { userEnteredFormat: {
+      textFormat: { bold:true, foregroundColorStyle: { rgbColor: { red:1, green:1, blue:1 } } },
+      backgroundColor: { red:0.118, green:0.161, blue:0.231 }
+    }}, fields:'userEnteredFormat(textFormat,backgroundColor)' }},
+    // Freeze header row
+    { updateSheetProperties: { properties: { sheetId:0, gridProperties: { frozenRowCount:1 } }, fields:'gridProperties.frozenRowCount' }},
+    // Column widths: Section=180, Field=240, Value=520
+    { updateDimensionProperties: { range: { sheetId:0, dimension:'COLUMNS', startIndex:0, endIndex:1 }, properties:{ pixelSize:180 }, fields:'pixelSize' }},
+    { updateDimensionProperties: { range: { sheetId:0, dimension:'COLUMNS', startIndex:1, endIndex:2 }, properties:{ pixelSize:240 }, fields:'pixelSize' }},
+    { updateDimensionProperties: { range: { sheetId:0, dimension:'COLUMNS', startIndex:2, endIndex:3 }, properties:{ pixelSize:520 }, fields:'pixelSize' }},
+    // Wrap + top-align value column
+    { repeatCell: { range: { sheetId:0, startColumnIndex:2, endColumnIndex:3 }, cell: { userEnteredFormat: { wrapStrategy:'WRAP', verticalAlignment:'TOP' }}, fields:'userEnteredFormat(wrapStrategy,verticalAlignment)' }},
+    // Top-align section + field columns
+    { repeatCell: { range: { sheetId:0, startColumnIndex:0, endColumnIndex:2 }, cell: { userEnteredFormat: { verticalAlignment:'TOP' }}, fields:'userEnteredFormat.verticalAlignment' }},
+    // Section color bands
+    ...sectionBands.map(({ start, end, r, g, b }) => ({
+      repeatCell: { range: { sheetId:0, startRowIndex:start, endRowIndex:end }, cell: { userEnteredFormat: { backgroundColor: { red:r, green:g, blue:b } }}, fields:'userEnteredFormat.backgroundColor' }
+    })),
+  ];
+
+  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ requests })
   });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    console.warn('Sheets batchUpdate failed:', err?.error?.message || res.status);
+    if (res.status === 403) {
+      showToast('Spreadsheet opened — enable the <b>Google Sheets API</b> in your <a href="https://console.cloud.google.com/apis/library/sheets.googleapis.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;white-space:nowrap;">Cloud Console ↗</a> for auto-formatting.');
+    }
+  }
 }
 
 async function openInGoogleSheets(s1, s2, s3, s4, s5, s6) {
   const name = (s1.campaign_name || 'Campaign Brief').replace(/[^\w\s-]/g, '').trim() || 'Campaign Brief';
   const file = await _driveUpload(name, 'application/vnd.google-apps.spreadsheet', 'text/csv', buildBriefCsv(s1, s2, s3, s4, s5, s6));
-  await _formatSheet(file.id).catch(() => {}); // best-effort — don't block opening if format fails
+  await _formatSheet(file.id).catch(e => console.warn('Sheet format skipped:', e.message));
   window.open(`https://docs.google.com/spreadsheets/d/${file.id}/edit`, '_blank');
 }
 
