@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Creative Drafts</title>
+  <link rel="stylesheet" href="shared.css?v=2.1">
+</head>
+<body>
+
+  <!-- Sticky top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <a href="brief.html" class="back-link">← Brief</a>
+      <span class="topbar-title">Creative Drafts</span>
+    </div>
+    <div class="topbar-actions brief-actions">
+      <button class="btn btn-sm btn-draft-all" id="draft-all-btn">✦ Draft All</button>
+      <button class="btn btn-sm btn-gdocs" id="gdocs-btn">Open in Google Docs</button>
+      <button class="btn btn-sm btn-danger" id="clear-btn">Clear Drafts</button>
+    </div>
+  </div>
+
+  <div id="creatives-root"></div>
+
+<script src="wizard.js?v=2.1"></script>
+<script>
+
+  const s1 = Store.load('stage1');
+  const s2 = Store.load('stage2');
+  const s4 = Store.load('stage4');
+  const s3 = Store.load('stage3');
+
+  // Which assets are selected in s2.assets (or all if none selected)
+  const selectedAssets = (s2.assets && s2.assets.length)
+    ? ASSET_DEFS.filter(d => s2.assets.includes(d.key))
+    : ASSET_DEFS;
+
+  let _drafts = CreativeDrafts.load();
+
+  function renderCreatives() {
+    const root = document.getElementById('creatives-root');
+    const hasData = Object.keys(s1).length + Object.keys(s2).length > 0;
+
+    if (!hasData) {
+      root.innerHTML = `<div class="creatives-wrap"><div class="creatives-empty empty-state">
+        <div class="empty-icon">🎨</div>
+        <div class="empty-title">No campaign data yet.</div>
+        <div class="empty-desc">Complete at least Stage 1 &amp; 2 of the wizard first, then come back to draft your creative assets.</div>
+        <a href="stage1.html" class="btn btn-primary" style="display:inline-flex;">Begin Stage 1 →</a>
+      </div></div>`;
+      return;
+    }
+
+    if (!selectedAssets.length) {
+      root.innerHTML = `<div class="creatives-wrap">
+        <div class="creatives-intro">
+          <h2>Creative Drafts</h2>
+          <p>No assets selected in Stage 2. <a href="stage2.html">Go to Stage 2</a> and select the assets you want to produce.</p>
+        </div>
+      </div>`;
+      return;
+    }
+
+    const campaignName = s1.campaign_name || 'Your Campaign';
+
+    const cards = selectedAssets.map(def => {
+      const draft = _drafts[def.key];
+      let bodyHtml, badgeHtml, actionsBtnHtml;
+
+      if (draft && draft.status === 'loading') {
+        bodyHtml = `<div class="creative-card-body draft-loading"><div class="draft-spinner"></div> Drafting…</div>`;
+        badgeHtml = '';
+        actionsBtnHtml = `<button class="btn btn-sm btn-ghost" disabled>Drafting…</button>`;
+      } else if (draft && draft.status === 'done') {
+        bodyHtml = `<div class="creative-card-body">${renderDraftBody(def.key, draft.data)}</div>`;
+        badgeHtml = `<span class="creative-card-badge done">✓ Drafted</span>`;
+        actionsBtnHtml = `<button class="btn btn-sm btn-ghost" data-redraft="${escHtml(def.key)}">✦ Re-draft</button>`;
+      } else if (draft && draft.status === 'error') {
+        bodyHtml = `<div class="creative-card-body draft-error">Error: ${escHtml(draft.error || 'Unknown error')} — try again.</div>`;
+        badgeHtml = `<span class="creative-card-badge" style="color:var(--c6);background:color-mix(in srgb,var(--c6) 15%,var(--surface2));">Error</span>`;
+        actionsBtnHtml = `<button class="btn btn-sm btn-ghost" data-draft="${escHtml(def.key)}">✦ Retry</button>`;
+      } else {
+        bodyHtml = `<div class="creative-card-body draft-empty">No draft yet — click Draft to generate with AI.</div>`;
+        badgeHtml = '';
+        actionsBtnHtml = `<button class="btn btn-sm btn-draft-all" data-draft="${escHtml(def.key)}">✦ Draft</button>`;
+      }
+
+      return `<div class="creative-card" id="card-${def.key.replace(/[^a-z0-9]/gi,'_')}">
+        <div class="creative-card-header" style="--accent-color:${def.color}">
+          <div class="creative-card-icon" style="background:color-mix(in srgb,${def.color} 18%,var(--surface2));color:${def.color}">${def.icon}</div>
+          <div class="creative-card-title">${escHtml(def.key)}</div>
+          ${badgeHtml}
+        </div>
+        ${bodyHtml}
+        <div class="creative-card-actions">${actionsBtnHtml}</div>
+      </div>`;
+    }).join('');
+
+    root.innerHTML = `<div class="creatives-wrap">
+      <div class="creatives-intro">
+        <h2>${escHtml(campaignName)} — Creative Drafts</h2>
+        <p>AI-generated copy and visual direction for each asset. Click <strong>Draft</strong> on individual assets, or <strong>Draft All</strong> to generate everything in parallel. Drafts are saved in your browser.</p>
+      </div>
+      <div class="creatives-grid">${cards}</div>
+    </div>`;
+
+    // Wire per-card draft buttons
+    document.querySelectorAll('[data-draft]').forEach(btn => {
+      btn.addEventListener('click', () => draftOne(btn.dataset.draft));
+    });
+    document.querySelectorAll('[data-redraft]').forEach(btn => {
+      btn.addEventListener('click', () => draftOne(btn.dataset.redraft));
+    });
+  }
+
+  function setCardLoading(key, loading) {
+    const cardId = 'card-' + key.replace(/[^a-z0-9]/gi,'_');
+    const card = document.getElementById(cardId);
+    if (!card) return;
+    if (loading) {
+      card.querySelector('.creative-card-body').className = 'creative-card-body draft-loading';
+      card.querySelector('.creative-card-body').innerHTML = '<div class="draft-spinner"></div> Drafting…';
+      const badge = card.querySelector('.creative-card-badge');
+      if (badge) badge.remove();
+      const btn = card.querySelector('[data-draft],[data-redraft]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Drafting…'; }
+    }
+  }
+
+  function updateCardFromDraft(key, result) {
+    const cardId = 'card-' + key.replace(/[^a-z0-9]/gi,'_');
+    const card = document.getElementById(cardId);
+    if (!card) return;
+
+    const body    = card.querySelector('.creative-card-body');
+    const header  = card.querySelector('.creative-card-header');
+    const actions = card.querySelector('.creative-card-actions');
+
+    if (result.status === 'done') {
+      body.className = 'creative-card-body';
+      body.innerHTML = renderDraftBody(key, result.data);
+      // add/update badge
+      let badge = header.querySelector('.creative-card-badge');
+      if (!badge) { badge = document.createElement('span'); badge.className = 'creative-card-badge done'; header.appendChild(badge); }
+      badge.className = 'creative-card-badge done';
+      badge.textContent = '✓ Drafted';
+      actions.innerHTML = `<button class="btn btn-sm btn-ghost" data-redraft="${escHtml(key)}">✦ Re-draft</button>`;
+      actions.querySelector('[data-redraft]').addEventListener('click', () => draftOne(key));
+    } else {
+      body.className = 'creative-card-body draft-error';
+      body.textContent = 'Error: ' + (result.error || 'Unknown error') + ' — try again.';
+      actions.innerHTML = `<button class="btn btn-sm btn-ghost" data-draft="${escHtml(key)}">✦ Retry</button>`;
+      actions.querySelector('[data-draft]').addEventListener('click', () => draftOne(key));
+    }
+  }
+
+  async function draftOne(key) {
+    if (!ApiKey.has()) {
+      showToast('No API key — click ⚙ to add your Anthropic key.');
+      return;
+    }
+    setCardLoading(key, true);
+    const ctx = _buildCreativesCtx(s1, s2, s3, s4);
+    try {
+      const data = await draftAsset(key, ctx);
+      _drafts[key] = { status: 'done', data };
+    } catch(e) {
+      _drafts[key] = { status: 'error', error: e.message === 'NO_API_KEY' ? 'No API key set.' : e.message };
+    }
+    CreativeDrafts.save(_drafts);
+    updateCardFromDraft(key, _drafts[key]);
+  }
+
+  // Draft All button
+  document.getElementById('draft-all-btn').addEventListener('click', async () => {
+    if (!ApiKey.has()) {
+      showToast('No API key — click ⚙ to add your Anthropic key.');
+      return;
+    }
+    const btn = document.getElementById('draft-all-btn');
+    btn.disabled = true;
+    btn.textContent = '✦ Drafting…';
+
+    const ctx = _buildCreativesCtx(s1, s2, s3, s4);
+    const keys = selectedAssets.map(d => d.key);
+
+    // Mark all unfinished as loading immediately
+    keys.forEach(key => {
+      if (!_drafts[key] || _drafts[key].status !== 'done') {
+        setCardLoading(key, true);
+      }
+    });
+
+    // Run all in parallel, update cards as each completes
+    await Promise.all(keys.map(async key => {
+      if (_drafts[key]?.status === 'done') return; // skip already-drafted
+      try {
+        const data = await draftAsset(key, ctx);
+        _drafts[key] = { status: 'done', data };
+      } catch(e) {
+        _drafts[key] = { status: 'error', error: e.message === 'NO_API_KEY' ? 'No API key set.' : e.message };
+      }
+      CreativeDrafts.save(_drafts);
+      updateCardFromDraft(key, _drafts[key]);
+    }));
+
+    btn.disabled = false;
+    btn.textContent = '✦ Draft All';
+    showToast('All drafts complete!');
+  });
+
+  // Google Docs export
+  document.getElementById('gdocs-btn').addEventListener('click', async () => {
+    const hasDrafts = Object.values(_drafts).some(d => d.status === 'done');
+    if (!hasDrafts) {
+      showToast('No drafts yet — generate some drafts first.');
+      return;
+    }
+    const btn = document.getElementById('gdocs-btn');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = 'Opening…';
+    try {
+      await openCreativesInGoogleDocs(s1, _drafts);
+    } catch(e) {
+      showToast(e.message.includes('not initialised')
+        ? 'Google auth loading — wait a moment and try again.'
+        : 'Could not open Google — check that pop-ups are allowed and try again.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  });
+
+  // Clear drafts
+  document.getElementById('clear-btn').addEventListener('click', () => {
+    if (!confirm('Clear all creative drafts? This cannot be undone.')) return;
+    CreativeDrafts.clear();
+    _drafts = {};
+    renderCreatives();
+  });
+
+  renderCreatives();
+
+</script>
+<script src="https://accounts.google.com/gsi/client" async onload="initGoogleAuth()"></script>
+</body>
+</html>

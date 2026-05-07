@@ -1334,3 +1334,206 @@ footer {
   margin-top: 8px;
   min-height: 18px;
 }
+
+/* ============================================================
+   CREATIVE DRAFTS PAGE
+   ============================================================ */
+
+.btn-creatives {
+  background: color-mix(in srgb, var(--c1) 15%, var(--surface2));
+  color: var(--c1);
+  border: 1px solid color-mix(in srgb, var(--c1) 30%, transparent);
+  font-weight: 700;
+}
+.btn-creatives:hover {
+  background: color-mix(in srgb, var(--c1) 22%, var(--surface2));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--c1) 25%, transparent);
+}
+
+.btn-draft-all {
+  background: color-mix(in srgb, var(--c1) 15%, var(--surface2));
+  color: var(--c1);
+  border: 1px solid color-mix(in srgb, var(--c1) 30%, transparent);
+  font-weight: 700;
+}
+.btn-draft-all:hover {
+  background: color-mix(in srgb, var(--c1) 22%, var(--surface2));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--c1) 25%, transparent);
+}
+.btn-draft-all:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Creative grid */
+.creatives-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 32px 80px;
+}
+
+.creatives-intro {
+  margin-bottom: 32px;
+}
+.creatives-intro h2 {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.creatives-intro p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.creatives-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+  gap: 20px;
+}
+
+.creative-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease;
+}
+.creative-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+
+.creative-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.creative-card-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+.creative-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.creative-card-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--c4) 18%, var(--surface2));
+  color: var(--c4);
+  letter-spacing: 0.02em;
+}
+.creative-card-badge.done {
+  background: color-mix(in srgb, var(--c4) 18%, var(--surface2));
+  color: var(--c4);
+}
+
+.creative-card-body {
+  padding: 16px 18px;
+  flex: 1;
+  min-height: 100px;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text-secondary, var(--muted));
+}
+
+.creative-card-body.draft-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.creative-card-body.draft-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--muted);
+}
+
+.creative-card-body.draft-error {
+  color: var(--c6);
+  font-size: 13px;
+}
+
+.draft-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--c1);
+  border-radius: 50%;
+  animation: draft-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes draft-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Draft content sections */
+.draft-section {
+  margin-bottom: 18px;
+}
+.draft-section:last-child { margin-bottom: 0; }
+
+.draft-section-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.draft-section-content {
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.draft-section-content.draft-copy {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--accent-color, var(--c1));
+}
+
+.creative-card-actions {
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* Empty state for creatives page */
+.creatives-empty {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.no-assets-msg {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+@media (max-width: 600px) {
+  .creatives-grid { grid-template-columns: 1fr; }
+  .creatives-wrap { padding: 24px 16px 60px; }
+}

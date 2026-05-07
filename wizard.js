@@ -1046,6 +1046,326 @@ async function polishBrief(s1, s2, s3, s4, s5, s6) {
   return { s1: r1, s2: r2, s3: r3, s4: r4, s5: r5, s6: r6 };
 }
 
+/* ============================================================
+   CREATIVE DRAFTS
+   ============================================================ */
+
+const ASSET_DEFS = [
+  { key: 'Email Sequence',       icon: '✉️',  color: 'var(--c1)', idx: 0 },
+  { key: 'Social Ad Creatives',  icon: '📱',  color: 'var(--c2)', idx: 1 },
+  { key: 'Display Banners',      icon: '🖼️',  color: 'var(--c3)', idx: 2 },
+  { key: 'Landing Page',         icon: '🌐',  color: 'var(--c4)', idx: 3 },
+  { key: 'Video (Hero)',         icon: '🎬',  color: 'var(--c5)', idx: 4 },
+  { key: 'Short-form Video',     icon: '▶️',  color: 'var(--c6)', idx: 5 },
+  { key: 'Blog / SEO Content',   icon: '📝',  color: 'var(--c1)', idx: 6 },
+  { key: 'eBook / Guide',        icon: '📖',  color: 'var(--c2)', idx: 7 },
+  { key: 'Case Study',           icon: '📊',  color: 'var(--c3)', idx: 8 },
+  { key: 'Webinar / Slides',     icon: '🎙️',  color: 'var(--c4)', idx: 9 },
+  { key: 'Press Release',        icon: '📰',  color: 'var(--c5)', idx: 10 },
+  { key: 'Influencer Brief',     icon: '🤝',  color: 'var(--c6)', idx: 11 },
+];
+
+const CreativeDrafts = {
+  _key: 'cw_creatives',
+  load() {
+    try { const r = localStorage.getItem(this._key); return r ? JSON.parse(r) : {}; }
+    catch(e) { return {}; }
+  },
+  save(drafts) {
+    try { localStorage.setItem(this._key, JSON.stringify(drafts)); }
+    catch(e) { console.warn('CreativeDrafts save failed:', e); }
+  },
+  clear() { localStorage.removeItem(this._key); }
+};
+
+function _buildCreativesCtx(s1, s2, s3, s4) {
+  const parts = [];
+  if (s1.campaign_name)       parts.push(`Campaign: ${s1.campaign_name}`);
+  if (s1.campaign_objective)  parts.push(`Objective: ${s1.campaign_objective}`);
+  if (s1.objective_detail)    parts.push(`Objective detail: ${s1.objective_detail}`);
+  if (s1.target_audience)     parts.push(`Target audience: ${s1.target_audience}`);
+  if (s1.budget)              parts.push(`Budget: ${s1.budget}`);
+  if (s1.channels?.length)    parts.push(`Channels: ${s1.channels.join(', ')}`);
+  if (s1.kpis?.length)        parts.push(`KPIs: ${s1.kpis.join(', ')}`);
+  if (s2.core_message)        parts.push(`Core message: ${s2.core_message}`);
+  if (s2.value_prop)          parts.push(`Value proposition: ${s2.value_prop}`);
+  if (s2.pain_points)         parts.push(`Pain points: ${s2.pain_points}`);
+  if (s2.tone?.length)        parts.push(`Tone of voice: ${s2.tone.join(', ')}`);
+  if (s2.headlines)           parts.push(`Headline directions: ${s2.headlines}`);
+  if (s2.cta_text)            parts.push(`Primary CTA: ${s2.cta_text}${s2.cta_url ? ' — ' + s2.cta_url : ''}`);
+  if (s2.visual_style)        parts.push(`Visual style: ${s2.visual_style}`);
+  if (s2.restrictions)        parts.push(`Restrictions: ${s2.restrictions}`);
+  if (s4.launch_date)         parts.push(`Launch date: ${s4.launch_date}`);
+  return parts.join('\n');
+}
+
+async function draftAsset(assetKey, ctx) {
+  const prompts = {
+    'Email Sequence': `Draft a 4-email campaign sequence. For each email return: subject line, preview text, headline, body copy (150-200 words), CTA. Also include a brief visual direction note for any banner/hero image in each email. Format as JSON with key "emails" (array of objects with keys: email_num, subject, preview, headline, body, cta, visual_direction).`,
+    'Social Ad Creatives': `Draft 3 social ad creatives (suitable for Meta/Instagram/LinkedIn). For each: primary text (125 chars max), headline (40 chars max), description (30 chars max), CTA button label. Also include visual direction: image concept, color palette suggestion, composition notes. JSON key "ads" (array: primary_text, headline, description, cta, visual_direction).`,
+    'Display Banners': `Draft copy and visual direction for 3 display banner sizes: 300x250 (Medium Rectangle), 728x90 (Leaderboard), 160x600 (Wide Skyscraper). For each: headline (max 5 words), subhead (max 10 words), CTA (max 3 words), visual concept, background/color direction. JSON key "banners" (array: size, headline, subhead, cta, visual_concept, color_direction).`,
+    'Landing Page': `Draft a landing page. Include: hero headline, hero subheadline, 3 benefit sections (heading + 2-sentence description each), social proof section concept, primary CTA section (headline + button text), visual direction for hero image and page mood. JSON keys: hero_headline, hero_subhead, benefits (array: heading, description), social_proof_concept, cta_headline, cta_button, visual_direction.`,
+    'Video (Hero)': `Draft a 60-90 second hero video script. Include: opening hook (5 sec), problem scene (15 sec), solution/brand reveal (20 sec), key benefits montage (20 sec), CTA close (10 sec). Also: visual direction for each scene, recommended music mood, on-screen text overlays. JSON keys: scenes (array: name, duration, script, visual_direction, on_screen_text), music_mood, overall_visual_concept.`,
+    'Short-form Video': `Draft 3 short-form video scripts (15-30 sec, TikTok/Reels/Shorts style). Each: hook line (3 sec), core message (15-20 sec), CTA (5 sec). Visual/editing direction for each. JSON key "videos" (array: hook, core, cta, visual_direction, editing_style).`,
+    'Blog / SEO Content': `Draft an SEO blog post outline and intro paragraph. Include: proposed title (H1), meta description (155 chars), target keyword, 5 H2 section headings with 2-3 bullet point notes each, intro paragraph (100 words), conclusion CTA sentence. JSON keys: title, meta_description, keyword, sections (array: heading, bullets), intro, conclusion_cta.`,
+    'eBook / Guide': `Draft an eBook / guide structure. Include: title, subtitle, table of contents (5-7 chapters with 2-3 subpoints each), intro blurb (100 words), key takeaway callout box for chapter 1, cover visual direction. JSON keys: title, subtitle, toc (array: chapter, subpoints), intro, ch1_callout, cover_direction.`,
+    'Case Study': `Draft a case study framework. Include: headline (outcome-led), subheadline, challenge section (3 bullet points), solution section (3 bullet points), results section (3 stat placeholders with context), pull quote concept, visual direction for layout/hero image. JSON keys: headline, subheadline, challenge_bullets, solution_bullets, results (array: stat_placeholder, context), pull_quote_concept, visual_direction.`,
+    'Webinar / Slides': `Draft a webinar/presentation structure. Include: event title, tagline, 8-10 slide titles with 2-3 speaker notes each, opening hook statement, closing CTA slide content, visual theme direction. JSON keys: title, tagline, slides (array: title, notes), opening_hook, closing_cta, visual_theme.`,
+    'Press Release': `Draft a press release. Include: headline, dateline/city, opening paragraph (who/what/when/where/why), two body paragraphs with quotes (placeholder for spokesperson name), boilerplate paragraph, media contact block (placeholder). JSON keys: headline, dateline, opening, body_paragraphs (array with quote attribute), boilerplate, media_contact.`,
+    'Influencer Brief': `Draft an influencer brief. Include: campaign overview (3 sentences), key messages (3 bullet points), content requirements (platform, format, posting cadence), do's (4 items), don'ts (4 items), creative freedom guidance, deliverable checklist, hashtag/handle requirements. JSON keys: overview, key_messages, requirements (platform, format, cadence), dos, donts, creative_freedom, deliverables, hashtags.`,
+  };
+
+  const system = `You are a world-class creative strategist and copywriter. The user will give you campaign context.
+Draft the requested asset with high quality, on-brand copy and actionable visual direction.
+Return ONLY valid JSON — no markdown fences, no commentary. All values must be strings or arrays of strings/objects.
+Be specific: reference the brand, audience, and message from the campaign context where possible.`;
+
+  const prompt = prompts[assetKey] || `Draft creative copy and visual direction for: ${assetKey}. Return JSON with "copy" (string) and "visual_direction" (string).`;
+
+  return await callClaude(system, `Campaign context:\n${ctx}\n\nTask: ${prompt}`, 2000);
+}
+
+async function draftAllAssets(assetKeys, ctx, onProgress) {
+  const results = {};
+  await Promise.all(assetKeys.map(async key => {
+    try {
+      results[key] = { status: 'done', data: await draftAsset(key, ctx) };
+    } catch(e) {
+      results[key] = { status: 'error', error: e.message };
+    }
+    if (typeof onProgress === 'function') onProgress(key, results[key]);
+  }));
+  return results;
+}
+
+function renderDraftBody(assetKey, data) {
+  const sections = [];
+
+  function sec(label, content, isCopy = false) {
+    if (!content) return '';
+    const text = Array.isArray(content) ? content.join('\n') : String(content);
+    if (!text.trim()) return '';
+    return `<div class="draft-section">
+      <div class="draft-section-label">${escHtml(label)}</div>
+      <div class="draft-section-content${isCopy ? ' draft-copy' : ''}">${escHtml(text)}</div>
+    </div>`;
+  }
+
+  function secList(label, items, formatter) {
+    if (!items?.length) return '';
+    const lines = items.map((item, i) => formatter ? formatter(item, i) : (typeof item === 'string' ? item : JSON.stringify(item)));
+    return sec(label, lines.join('\n\n'));
+  }
+
+  try {
+    if (assetKey === 'Email Sequence' && data.emails) {
+      return data.emails.map((e, i) =>
+        `<div class="draft-section"><div class="draft-section-label">Email ${i+1} — ${escHtml(e.subject || '')}</div>` +
+        `<div class="draft-section-content draft-copy">${escHtml([
+          e.preview ? 'Preview: ' + e.preview : '',
+          e.headline ? 'Headline: ' + e.headline : '',
+          e.body || '',
+          e.cta ? 'CTA: ' + e.cta : '',
+        ].filter(Boolean).join('\n'))}</div>` +
+        (e.visual_direction ? `<div class="draft-section-content" style="font-size:12px;color:var(--muted);margin-top:6px">Visual: ${escHtml(e.visual_direction)}</div>` : '') +
+        `</div>`
+      ).join('');
+    }
+
+    if (assetKey === 'Social Ad Creatives' && data.ads) {
+      return data.ads.map((ad, i) =>
+        `<div class="draft-section"><div class="draft-section-label">Ad ${i+1}</div>` +
+        `<div class="draft-section-content draft-copy">${escHtml([
+          ad.primary_text, ad.headline, ad.description, ad.cta ? 'Button: ' + ad.cta : ''
+        ].filter(Boolean).join('\n'))}</div>` +
+        (ad.visual_direction ? `<div class="draft-section-content" style="font-size:12px;color:var(--muted);margin-top:6px">Visual: ${escHtml(ad.visual_direction)}</div>` : '') +
+        `</div>`
+      ).join('');
+    }
+
+    if (assetKey === 'Display Banners' && data.banners) {
+      return data.banners.map(b =>
+        `<div class="draft-section"><div class="draft-section-label">${escHtml(b.size || '')}</div>` +
+        `<div class="draft-section-content draft-copy">${escHtml([b.headline, b.subhead, b.cta ? 'CTA: ' + b.cta : ''].filter(Boolean).join('\n'))}</div>` +
+        (b.visual_concept ? `<div class="draft-section-content" style="font-size:12px;color:var(--muted);margin-top:6px">Visual: ${escHtml(b.visual_concept)}${b.color_direction ? ' — ' + b.color_direction : ''}</div>` : '') +
+        `</div>`
+      ).join('');
+    }
+
+    if (assetKey === 'Landing Page') {
+      return [
+        sec('Hero', [data.hero_headline, data.hero_subhead].filter(Boolean).join('\n'), true),
+        data.benefits?.length ? `<div class="draft-section"><div class="draft-section-label">Benefits</div>${data.benefits.map(b => `<div class="draft-section-content draft-copy" style="margin-bottom:8px"><strong>${escHtml(b.heading||'')}</strong><br>${escHtml(b.description||'')}</div>`).join('')}</div>` : '',
+        sec('CTA Section', [data.cta_headline, data.cta_button ? 'Button: ' + data.cta_button : ''].filter(Boolean).join('\n'), true),
+        data.social_proof_concept ? sec('Social Proof Concept', data.social_proof_concept) : '',
+        data.visual_direction ? sec('Visual Direction', data.visual_direction) : '',
+      ].join('');
+    }
+
+    if (assetKey === 'Video (Hero)' && data.scenes) {
+      return [
+        data.overall_visual_concept ? sec('Visual Concept', data.overall_visual_concept) : '',
+        data.music_mood ? sec('Music Mood', data.music_mood) : '',
+        ...data.scenes.map(s =>
+          `<div class="draft-section"><div class="draft-section-label">${escHtml(s.name||'')} (${escHtml(String(s.duration||''))})</div>` +
+          `<div class="draft-section-content draft-copy">${escHtml(s.script||'')}</div>` +
+          (s.visual_direction ? `<div class="draft-section-content" style="font-size:12px;color:var(--muted);margin-top:4px">Visual: ${escHtml(s.visual_direction)}</div>` : '') +
+          (s.on_screen_text ? `<div class="draft-section-content" style="font-size:12px;color:var(--muted)">On screen: ${escHtml(s.on_screen_text)}</div>` : '') +
+          `</div>`
+        ),
+      ].join('');
+    }
+
+    if (assetKey === 'Short-form Video' && data.videos) {
+      return data.videos.map((v, i) =>
+        `<div class="draft-section"><div class="draft-section-label">Video ${i+1}</div>` +
+        `<div class="draft-section-content draft-copy">${escHtml(['Hook: '+v.hook, v.core, 'CTA: '+v.cta].filter(Boolean).join('\n'))}</div>` +
+        (v.visual_direction ? `<div class="draft-section-content" style="font-size:12px;color:var(--muted);margin-top:4px">Visual: ${escHtml(v.visual_direction)}${v.editing_style ? ' | Edit: '+v.editing_style : ''}</div>` : '') +
+        `</div>`
+      ).join('');
+    }
+
+    if (assetKey === 'Blog / SEO Content') {
+      return [
+        sec('Title & Meta', [data.title, 'Meta: '+(data.meta_description||''), 'Keyword: '+(data.keyword||'')].filter(Boolean).join('\n'), true),
+        data.sections?.length ? `<div class="draft-section"><div class="draft-section-label">Sections</div>${data.sections.map(s=>`<div class="draft-section-content draft-copy" style="margin-bottom:8px"><strong>${escHtml(s.heading||'')}</strong><br>${escHtml((s.bullets||[]).join('\n'))}</div>`).join('')}</div>` : '',
+        sec('Intro', data.intro, true),
+        sec('Conclusion CTA', data.conclusion_cta),
+      ].join('');
+    }
+
+    if (assetKey === 'eBook / Guide') {
+      return [
+        sec('Title', [data.title, data.subtitle].filter(Boolean).join('\n'), true),
+        sec('Intro', data.intro),
+        data.toc?.length ? `<div class="draft-section"><div class="draft-section-label">Table of Contents</div>${data.toc.map(c=>`<div class="draft-section-content draft-copy" style="margin-bottom:8px"><strong>${escHtml(c.chapter||'')}</strong><br>${escHtml((c.subpoints||[]).join('\n'))}</div>`).join('')}</div>` : '',
+        sec('Ch. 1 Callout', data.ch1_callout, true),
+        sec('Cover Direction', data.cover_direction),
+      ].join('');
+    }
+
+    if (assetKey === 'Case Study') {
+      return [
+        sec('Headline', [data.headline, data.subheadline].filter(Boolean).join('\n'), true),
+        sec('Challenge', (data.challenge_bullets||[]).join('\n')),
+        sec('Solution', (data.solution_bullets||[]).join('\n')),
+        data.results?.length ? sec('Results', data.results.map(r=>r.stat_placeholder+' — '+r.context).join('\n')) : '',
+        sec('Pull Quote Concept', data.pull_quote_concept, true),
+        sec('Visual Direction', data.visual_direction),
+      ].join('');
+    }
+
+    if (assetKey === 'Webinar / Slides') {
+      return [
+        sec('Title & Tagline', [data.title, data.tagline].filter(Boolean).join('\n'), true),
+        sec('Opening Hook', data.opening_hook, true),
+        data.slides?.length ? `<div class="draft-section"><div class="draft-section-label">Slides</div>${data.slides.map((s,i)=>`<div class="draft-section-content draft-copy" style="margin-bottom:8px"><strong>${i+1}. ${escHtml(s.title||'')}</strong><br>${escHtml((s.notes||[]).join('\n'))}</div>`).join('')}</div>` : '',
+        sec('Closing CTA Slide', data.closing_cta, true),
+        sec('Visual Theme', data.visual_theme),
+      ].join('');
+    }
+
+    if (assetKey === 'Press Release') {
+      return [
+        sec('Headline', data.headline, true),
+        sec('Opening Paragraph', data.opening, true),
+        data.body_paragraphs?.length ? `<div class="draft-section"><div class="draft-section-label">Body</div>${data.body_paragraphs.map(p=>`<div class="draft-section-content draft-copy" style="margin-bottom:8px">${escHtml(typeof p==='string'?p:p.quote||JSON.stringify(p))}</div>`).join('')}</div>` : '',
+        sec('Boilerplate', data.boilerplate),
+      ].join('');
+    }
+
+    if (assetKey === 'Influencer Brief') {
+      return [
+        sec('Overview', data.overview, true),
+        sec('Key Messages', (data.key_messages||[]).join('\n')),
+        data.requirements ? sec('Requirements', [data.requirements.platform, data.requirements.format, 'Cadence: '+data.requirements.cadence].filter(Boolean).join('\n')) : '',
+        sec("Do's", (data.dos||[]).join('\n')),
+        sec("Don'ts", (data.donts||[]).join('\n')),
+        sec('Creative Freedom', data.creative_freedom),
+        sec('Deliverables', (data.deliverables||[]).join('\n')),
+        sec('Hashtags / Handles', (data.hashtags||[]).join(' ')),
+      ].join('');
+    }
+
+    // Fallback: render top-level string fields
+    return Object.entries(data).map(([k, v]) => {
+      if (typeof v === 'string') return sec(k.replace(/_/g,' '), v, true);
+      if (Array.isArray(v) && v.every(x=>typeof x==='string')) return sec(k.replace(/_/g,' '), v.join('\n'));
+      return '';
+    }).join('');
+
+  } catch(e) {
+    return `<div class="draft-section-content draft-copy">${escHtml(JSON.stringify(data, null, 2))}</div>`;
+  }
+}
+
+function buildCreativesDocHtml(s1, drafts) {
+  const COLORS  = ['#b89af5','#70a5f9','#3dd8e8','#4ade95','#fbbf50','#fb7185'];
+  const TINTS   = ['#f6f3fe','#eef4fe','#e8fafc','#e9fbf2','#fef7ea','#feeef0'];
+  const name    = s1.campaign_name || 'Campaign';
+  const generated = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+
+  let html = `<html><body style="font-family:Arial,sans-serif;color:#1a1a2e;max-width:900px;margin:0 auto;padding:32px;">
+<p style="font-size:11px;color:#888;margin-bottom:4px;">Creative Assets — Generated ${generated}</p>
+<h1 style="font-size:28px;font-weight:900;margin:0 0 32px;">${escHtml(name)} — Creative Drafts</h1>`;
+
+  ASSET_DEFS.forEach((def, idx) => {
+    const draft = drafts[def.key];
+    if (!draft || draft.status !== 'done') return;
+    const color = COLORS[idx % COLORS.length];
+    const tint  = TINTS[idx % TINTS.length];
+
+    html += `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">
+<tr><td style="background:${tint};border-top:4px solid ${color};padding:16px 20px;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr>
+<td style="width:32px;height:32px;background:${color};border-radius:8px;text-align:center;vertical-align:middle;font-size:16px;">${def.icon}</td>
+<td style="padding-left:12px;font-size:16px;font-weight:700;color:#1a1a2e;">${escHtml(def.key)}</td>
+</tr></table>
+</td></tr>
+<tr><td style="padding:16px 20px;background:#ffffff;">`;
+
+    // Render draft data as simple paragraphs for Docs
+    function docSec(label, content) {
+      if (!content) return '';
+      const text = Array.isArray(content) ? content.join('\n') : String(content);
+      if (!text.trim()) return '';
+      return `<p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;">${escHtml(label)}</p>
+<p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:10px 12px;border-left:3px solid ${color};border-radius:4px;">${escHtml(text)}</p>`;
+    }
+
+    try {
+      const d = draft.data;
+      // Use a simplified text rendering for each asset type
+      if (d.emails)   d.emails.forEach((e,i) => { html += docSec(`Email ${i+1} — ${e.subject||''}`, [e.preview?'Preview: '+e.preview:'', e.headline?'Headline: '+e.headline:'', e.body||'', e.cta?'CTA: '+e.cta:'', e.visual_direction?'Visual: '+e.visual_direction:''].filter(Boolean).join('\n')); });
+      else if (d.ads)   d.ads.forEach((a,i) => { html += docSec(`Ad ${i+1}`, [a.primary_text,a.headline,a.description,a.cta?'CTA: '+a.cta:'',a.visual_direction?'Visual: '+a.visual_direction:''].filter(Boolean).join('\n')); });
+      else if (d.banners) d.banners.forEach(b => { html += docSec(b.size||'Banner', [b.headline,b.subhead,b.cta?'CTA: '+b.cta:'',b.visual_concept?'Visual: '+b.visual_concept+(b.color_direction?' — '+b.color_direction:''):''].filter(Boolean).join('\n')); });
+      else if (d.scenes) { html += docSec('Visual Concept', d.overall_visual_concept); html += docSec('Music Mood', d.music_mood); d.scenes.forEach(s=>{ html += docSec(`${s.name||''} (${s.duration||''})`, [s.script,s.visual_direction?'Visual: '+s.visual_direction:'',s.on_screen_text?'On screen: '+s.on_screen_text:''].filter(Boolean).join('\n')); }); }
+      else if (d.videos) d.videos.forEach((v,i) => { html += docSec(`Video ${i+1}`, ['Hook: '+v.hook, v.core, 'CTA: '+v.cta, v.visual_direction?'Visual: '+v.visual_direction+(v.editing_style?' | Edit: '+v.editing_style:''):''].filter(Boolean).join('\n')); });
+      else if (d.slides) { html += docSec('Title & Tagline', [d.title, d.tagline].filter(Boolean).join('\n')); html += docSec('Opening Hook', d.opening_hook); d.slides.forEach((s,i)=>{ html += docSec(`Slide ${i+1}: ${s.title||''}`, (s.notes||[]).join('\n')); }); html += docSec('Closing CTA', d.closing_cta); html += docSec('Visual Theme', d.visual_theme); }
+      else {
+        Object.entries(d).forEach(([k, v]) => {
+          if (typeof v === 'string' && v.trim()) html += docSec(k.replace(/_/g,' '), v);
+          else if (Array.isArray(v) && v.every(x=>typeof x==='string')) html += docSec(k.replace(/_/g,' '), v.join('\n'));
+          else if (Array.isArray(v) && v.length) html += docSec(k.replace(/_/g,' '), v.map(x=>typeof x==='string'?x:JSON.stringify(x)).join('\n'));
+        });
+      }
+    } catch(e) {
+      html += `<p style="font-size:12px;color:#888;">Error rendering draft.</p>`;
+    }
+
+    html += `</td></tr></table>`;
+  });
+
+  html += `</body></html>`;
+  return html;
+}
+
+async function openCreativesInGoogleDocs(s1, drafts) {
+  const name = (s1.campaign_name || 'Campaign') + ' — Creative Drafts';
+  const file = await _driveUpload(name, 'application/vnd.google-apps.document', 'text/html', buildCreativesDocHtml(s1, drafts));
+  window.open(`https://docs.google.com/document/d/${file.id}/edit`, '_blank');
+}
+
 /* ── Reset modal ── */
 function initResetModal() {
   const overlay = document.querySelector('.reset-overlay');
