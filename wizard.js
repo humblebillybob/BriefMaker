@@ -823,70 +823,213 @@ async function openInGoogleDocs(s1, s2, s3, s4, s5, s6) {
   window.open(`https://docs.google.com/document/d/${file.id}/edit`, '_blank');
 }
 
-async function _formatSheet(spreadsheetId) {
-  const token = await getGoogleToken();
+async function openInGoogleSheets(s1, s2, s3, s4, s5, s6) {
+  const token    = await getGoogleToken();
+  const campName = (s1.campaign_name || 'Campaign Brief').replace(/[^\w\s-]/g,'').trim() || 'Campaign Brief';
+  const splitVal = s1.budget_split || '70';
+  const splitLabel = splitVal + '% Media / ' + (100 - parseInt(splitVal)) + '% Production';
+  const campDates  = (s1.start_date && s1.end_date) ? s1.start_date + ' → ' + s1.end_date : '';
+  const genDate    = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
 
-  // Drive CSV conversion doesn't guarantee sheetId=0 — fetch the real one first
-  const metaRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties.sheetId`, {
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
-  const metaJson = await metaRes.json();
-  const sid = metaJson?.sheets?.[0]?.properties?.sheetId ?? 0;
-
-  // Row ranges per section (0-indexed). Must match buildBriefCsv row order exactly.
-  // Row 0 = header. S&P: 1-13 (13 rows), Creative: 14-25 (12), Pre-Launch: 26-35 (10),
-  // Launch: 36-46 (11), Optimization: 47-56 (10), Reporting: 57-67 (11)
-  const sectionBands = [
-    { start:1,  end:14, r:0.965, g:0.953, b:0.996 },  // #f6f3fe purple tint
-    { start:14, end:26, r:0.933, g:0.957, b:0.996 },  // #eef4fe blue tint
-    { start:26, end:36, r:0.910, g:0.980, b:0.988 },  // #e8fafc teal tint
-    { start:36, end:47, r:0.914, g:0.984, b:0.949 },  // #e9fbf2 green tint
-    { start:47, end:57, r:0.996, g:0.969, b:0.918 },  // #fef7ea amber tint
-    { start:57, end:68, r:0.996, g:0.933, b:0.941 },  // #feeef0 pink tint
+  // Section palette — colors must use { red, green, blue } for Sheets API
+  const SECS = [
+    { num:'01', name:'Strategy & Planning',   color:{red:0.722,green:0.604,blue:0.961}, tint:{red:0.965,green:0.953,blue:0.996} },
+    { num:'02', name:'Creative Development',  color:{red:0.439,green:0.647,blue:0.976}, tint:{red:0.933,green:0.957,blue:0.996} },
+    { num:'03', name:'Pre-Launch Setup',      color:{red:0.239,green:0.847,blue:0.910}, tint:{red:0.910,green:0.980,blue:0.988} },
+    { num:'04', name:'Launch & Activation',   color:{red:0.290,green:0.867,blue:0.584}, tint:{red:0.914,green:0.984,blue:0.949} },
+    { num:'05', name:'Optimization',          color:{red:0.984,green:0.749,blue:0.314}, tint:{red:0.996,green:0.969,blue:0.918} },
+    { num:'06', name:'Reporting & Iteration', color:{red:0.984,green:0.443,blue:0.522}, tint:{red:0.996,green:0.933,blue:0.941} },
   ];
 
-  const requests = [
-    // Dark header row: near-black background, white bold text
-    { repeatCell: { range: { sheetId:sid, startRowIndex:0, endRowIndex:1 }, cell: { userEnteredFormat: {
-      textFormat: { bold:true, foregroundColorStyle: { rgbColor: { red:1, green:1, blue:1 } } },
-      backgroundColor: { red:0.118, green:0.161, blue:0.231 }
-    }}, fields:'userEnteredFormat(textFormat,backgroundColor)' }},
-    // Freeze header row
-    { updateSheetProperties: { properties: { sheetId:sid, gridProperties: { frozenRowCount:1 } }, fields:'gridProperties.frozenRowCount' }},
-    // Column widths: Section=180, Field=240, Value=520
-    { updateDimensionProperties: { range: { sheetId:sid, dimension:'COLUMNS', startIndex:0, endIndex:1 }, properties:{ pixelSize:180 }, fields:'pixelSize' }},
-    { updateDimensionProperties: { range: { sheetId:sid, dimension:'COLUMNS', startIndex:1, endIndex:2 }, properties:{ pixelSize:240 }, fields:'pixelSize' }},
-    { updateDimensionProperties: { range: { sheetId:sid, dimension:'COLUMNS', startIndex:2, endIndex:3 }, properties:{ pixelSize:520 }, fields:'pixelSize' }},
-    // Wrap + top-align value column
-    { repeatCell: { range: { sheetId:sid, startColumnIndex:2, endColumnIndex:3 }, cell: { userEnteredFormat: { wrapStrategy:'WRAP', verticalAlignment:'TOP' }}, fields:'userEnteredFormat(wrapStrategy,verticalAlignment)' }},
-    // Top-align section + field columns
-    { repeatCell: { range: { sheetId:sid, startColumnIndex:0, endColumnIndex:2 }, cell: { userEnteredFormat: { verticalAlignment:'TOP' }}, fields:'userEnteredFormat.verticalAlignment' }},
-    // Section color bands
-    ...sectionBands.map(({ start, end, r, g, b }) => ({
-      repeatCell: { range: { sheetId:sid, startRowIndex:start, endRowIndex:end }, cell: { userEnteredFormat: { backgroundColor: { red:r, green:g, blue:b } }}, fields:'userEnteredFormat.backgroundColor' }
-    })),
-  ];
-
-  const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}:batchUpdate`, {
+  // ── 1. Create empty spreadsheet ──
+  const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ requests })
+    body: JSON.stringify({ name: campName, mimeType: 'application/vnd.google-apps.spreadsheet' })
+  });
+  if (!createRes.ok) throw new Error('Drive API error ' + createRes.status);
+  const { id } = await createRes.json();
+
+  // ── 2. Get default sheet ID ──
+  const metaJson = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}?fields=sheets.properties`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  }).then(r => r.json());
+  const defaultId = metaJson.sheets[0].properties.sheetId;
+
+  // ── 3. Create all 7 tabs (Overview + 6 sections) ──
+  const setupJson = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}:batchUpdate`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requests: [
+      { updateSheetProperties: { properties: { sheetId: defaultId, title: '📋 Overview' }, fields: 'title' } },
+      ...SECS.map((s, i) => ({
+        addSheet: { properties: { title: s.num + ' — ' + s.name, index: i + 1, tabColorStyle: { rgbColor: s.color } } }
+      }))
+    ]})
+  }).then(r => r.json());
+
+  const secIds   = setupJson.replies.filter(r => r.addSheet).map(r => r.addSheet.properties.sheetId);
+  const tabNames = ['📋 Overview', ...SECS.map(s => s.num + ' — ' + s.name)];
+  const sheetIds = [defaultId, ...secIds];
+
+  // ── 4. Build tab data ──
+  // Helper: collect field rows, skipping empty values and collapsing consecutive spacers
+  function fr(...items) {
+    const out = []; let wasSpacer = true;
+    for (const item of items) {
+      if (!item) { if (!wasSpacer) { out.push([]); wasSpacer = true; } }
+      else {
+        const v = item[1];
+        if (v !== null && v !== undefined && String(v).trim() !== '') { out.push(item); wasSpacer = false; }
+      }
+    }
+    while (out.length && out[out.length-1].length === 0) out.pop();
+    return out;
+  }
+  const join = arr => (arr && arr.length) ? arr.join('  ·  ') : '';
+
+  const tabData = [
+    // ── Overview: fixed 15 rows for predictable formatting ──
+    [
+      [campName],
+      ['Campaign Brief — ' + genDate],
+      [],
+      ['Objective', s1.campaign_objective || ''],
+      ['Budget',    s1.budget             || ''],
+      ['Dates',     campDates             || ''],
+      ['Launch',    s4.launch_date        || ''],
+      [],
+      ['PHASE', 'SECTION', 'KEY SIGNAL'],
+      ['01', 'Strategy & Planning',   s1.campaign_objective || ''],
+      ['02', 'Creative Development',  s2.core_message       || ''],
+      ['03', 'Pre-Launch Setup',      s3.go_nogo || s3.warmup_type || ''],
+      ['04', 'Launch & Activation',   [s4.launch_date, s4.launch_time].filter(Boolean).join(' @ ')],
+      ['05', 'Optimization',          s5.opt_cadence        || ''],
+      ['06', 'Reporting & Iteration', s6.success_def        || ''],
+    ],
+    // ── 01 Strategy & Planning ──
+    [ ['01 — Strategy & Planning'], [],
+      ...fr(
+        ['Campaign Objective', s1.campaign_objective], ['Objective Detail', s1.objective_detail], null,
+        ['Target Audience', s1.target_audience], ['Audience Size', s1.audience_size], null,
+        ['Total Budget', s1.budget], ['Budget Split', splitLabel], ['Campaign Dates', campDates], null,
+        ['Channel Mix', join(s1.channels)], ['Primary KPIs', join(s1.kpis)], ['KPI Targets', s1.kpi_targets], null,
+        ['Competitors to Watch', s1.competitors],
+      )],
+    // ── 02 Creative Development ──
+    [ ['02 — Creative Development'], [],
+      ...fr(
+        ['Core Campaign Message', s2.core_message], ['Value Proposition', s2.value_prop], ['Pain Points Addressed', s2.pain_points], null,
+        ['Tone of Voice', join(s2.tone)], ['Headline Directions', s2.headlines], null,
+        ['Primary CTA',   s2.cta_text   ? s2.cta_text   + (s2.cta_url   ? '  →  ' + s2.cta_url   : '') : null],
+        ['Secondary CTA', s2.cta2_text  ? s2.cta2_text  + (s2.cta2_url  ? '  →  ' + s2.cta2_url  : '') : null], null,
+        ['Assets to Produce', join(s2.assets)], ['Visual Style Direction', s2.visual_style], ['Content Restrictions', s2.restrictions],
+      )],
+    // ── 03 Pre-Launch Setup ──
+    [ ['03 — Pre-Launch Setup'], [],
+      ...fr(
+        ['Tracking Stack', join(s3.tracking)], ['Conversion Events', s3.conversion_events], null,
+        ['UTM Source Format', s3.utm_source], ['UTM Medium Format', s3.utm_medium], ['UTM Campaign Naming', s3.utm_campaign], null,
+        ['QA Checklist', join(s3.qa)], null,
+        ['Stakeholder Briefing Plan', s3.stakeholder_plan], ['Warm-Up Strategy', s3.warmup_type], ['Warm-Up Details', s3.warmup_details], null,
+        ['Go / No-Go Criteria', s3.go_nogo],
+      )],
+    // ── 04 Launch & Activation ──
+    [ ['04 — Launch & Activation'], [],
+      ...fr(
+        ['Launch Date', s4.launch_date], ['Launch Time', s4.launch_time], null,
+        ['Channel Activation Order', s4.channel_order], ['Paid Media Plan', s4.paid_plan],
+        ['Organic Content Plan', s4.organic_plan], ['Email Launch Sequence', s4.email_plan],
+        ['PR & Earned Media Plan', s4.pr_plan], null,
+        ['Team & Channel Owners', s4.team_owners], ['Monitoring Plan (First 72 hrs)', s4.monitoring_plan],
+        ['Early Signal Thresholds', s4.early_signals], ['Escalation Path', s4.escalation],
+      )],
+    // ── 05 Optimization Framework ──
+    [ ['05 — Optimization Framework'], [],
+      ...fr(
+        ['Optimization Cadence', s5.opt_cadence], null,
+        ['A/B Testing — Creative', s5.ab_creative], ['A/B Testing — Copy & Messaging', s5.ab_copy],
+        ['A/B Testing — Audience', s5.ab_audience], ['Statistical Significance', s5.stat_sig], null,
+        ['Budget Reallocation Rules', s5.budget_rules], ['Kill Criteria', s5.kill_criteria], ['Scale Criteria', s5.scale_criteria], null,
+        ['Landing Page Optimization', s5.lp_optimization], ['Audience Refinement Plan', s5.audience_refinement],
+      )],
+    // ── 06 Reporting & Iteration ──
+    [ ['06 — Reporting & Iteration'], [],
+      ...fr(
+        ['Reporting Cadence', join(s6.reporting)], ['Report Recipients', s6.report_recipients], ['Reporting Dashboard', s6.dashboard_tool], null,
+        ['Success Definition', s6.success_def], ['Attribution Model', s6.attribution_model], ['ROI Calculation Method', s6.roi_method], null,
+        ['Post-Campaign Review Format', s6.retro_format], ['Strategic Questions', s6.strategic_questions],
+        ['Learnings Template', s6.learnings_template], null,
+        ['Next Campaign Trigger', s6.next_cycle], ['Asset Archive Plan', s6.asset_archive],
+      )],
+  ];
+
+  // ── 5. Populate all tabs ──
+  await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}/values:batchUpdate`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      valueInputOption: 'RAW',
+      data: tabData.map((rows, i) => ({
+        range: "'" + tabNames[i] + "'!A1",
+        values: rows.map(r => r.length === 0 ? [''] : r)
+      }))
+    })
   });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    console.warn('Sheets batchUpdate failed:', err?.error?.message || res.status);
-    if (res.status === 403) {
-      showToast('Spreadsheet opened — enable the <b>Google Sheets API</b> in your <a href="https://console.cloud.google.com/apis/library/sheets.googleapis.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;white-space:nowrap;">Cloud Console ↗</a> for auto-formatting.');
-    }
-  }
-}
+  // ── 6. Format all tabs ──
+  const DARK = { red:0.118, green:0.161, blue:0.231 };
+  const WHITE = { rgbColor: { red:1, green:1, blue:1 } };
+  const fmt = [];
 
-async function openInGoogleSheets(s1, s2, s3, s4, s5, s6) {
-  const name = (s1.campaign_name || 'Campaign Brief').replace(/[^\w\s-]/g, '').trim() || 'Campaign Brief';
-  const file = await _driveUpload(name, 'application/vnd.google-apps.spreadsheet', 'text/csv', buildBriefCsv(s1, s2, s3, s4, s5, s6));
-  await _formatSheet(file.id).catch(e => console.warn('Sheet format skipped:', e.message));
-  window.open(`https://docs.google.com/spreadsheets/d/${file.id}/edit`, '_blank');
+  // Overview formatting
+  const ov = defaultId;
+  fmt.push(
+    { mergeCells: { range: { sheetId:ov, startRowIndex:0, endRowIndex:1, startColumnIndex:0, endColumnIndex:3 }, mergeType:'MERGE_ALL' } },
+    { repeatCell: { range: { sheetId:ov, startRowIndex:0, endRowIndex:1 }, cell: { userEnteredFormat: { textFormat: { bold:true, fontSize:16 } } }, fields:'userEnteredFormat.textFormat' } },
+    { mergeCells: { range: { sheetId:ov, startRowIndex:1, endRowIndex:2, startColumnIndex:0, endColumnIndex:3 }, mergeType:'MERGE_ALL' } },
+    { repeatCell: { range: { sheetId:ov, startRowIndex:1, endRowIndex:2 }, cell: { userEnteredFormat: { textFormat: { foregroundColorStyle: { rgbColor: { red:0.6, green:0.6, blue:0.6 } } } } }, fields:'userEnteredFormat.textFormat' } },
+    // Meta labels (rows 3-6) col A: bold
+    { repeatCell: { range: { sheetId:ov, startRowIndex:3, endRowIndex:7, startColumnIndex:0, endColumnIndex:1 }, cell: { userEnteredFormat: { textFormat: { bold:true } } }, fields:'userEnteredFormat.textFormat' } },
+    // Timeline header row 8: dark bg, white bold
+    { repeatCell: { range: { sheetId:ov, startRowIndex:8, endRowIndex:9 }, cell: { userEnteredFormat: { textFormat: { bold:true, foregroundColorStyle: WHITE }, backgroundColor: DARK } }, fields:'userEnteredFormat(textFormat,backgroundColor)' } },
+    // Section rows 9-14: tinted backgrounds
+    ...SECS.map((s, i) => ({ repeatCell: { range: { sheetId:ov, startRowIndex:9+i, endRowIndex:10+i }, cell: { userEnteredFormat: { backgroundColor: s.tint } }, fields:'userEnteredFormat.backgroundColor' } })),
+    // Phase number (col A, rows 9-14): bold + section color
+    ...SECS.map((s, i) => ({ repeatCell: { range: { sheetId:ov, startRowIndex:9+i, endRowIndex:10+i, startColumnIndex:0, endColumnIndex:1 }, cell: { userEnteredFormat: { textFormat: { bold:true, foregroundColorStyle: { rgbColor: s.color } } } }, fields:'userEnteredFormat.textFormat' } })),
+    // Col C (key signal): wrap
+    { repeatCell: { range: { sheetId:ov, startRowIndex:0, endRowIndex:200, startColumnIndex:2, endColumnIndex:3 }, cell: { userEnteredFormat: { wrapStrategy:'WRAP', verticalAlignment:'TOP' } }, fields:'userEnteredFormat(wrapStrategy,verticalAlignment)' } },
+    // Overview column widths: A=60, B=220, C=480
+    { updateDimensionProperties: { range: { sheetId:ov, dimension:'COLUMNS', startIndex:0, endIndex:1 }, properties:{ pixelSize:60  }, fields:'pixelSize' } },
+    { updateDimensionProperties: { range: { sheetId:ov, dimension:'COLUMNS', startIndex:1, endIndex:2 }, properties:{ pixelSize:220 }, fields:'pixelSize' } },
+    { updateDimensionProperties: { range: { sheetId:ov, dimension:'COLUMNS', startIndex:2, endIndex:3 }, properties:{ pixelSize:480 }, fields:'pixelSize' } },
+  );
+
+  // Section tab formatting
+  SECS.forEach((s, i) => {
+    const sid = secIds[i];
+    fmt.push(
+      // Row 0: merge A:B, tint bg, bold section-colored title
+      { mergeCells: { range: { sheetId:sid, startRowIndex:0, endRowIndex:1, startColumnIndex:0, endColumnIndex:2 }, mergeType:'MERGE_ALL' } },
+      { repeatCell: { range: { sheetId:sid, startRowIndex:0, endRowIndex:1 }, cell: { userEnteredFormat: { textFormat: { bold:true, fontSize:14, foregroundColorStyle: { rgbColor: s.color } }, backgroundColor: s.tint } }, fields:'userEnteredFormat(textFormat,backgroundColor)' } },
+      // Col A (rows 2+): bold, section color, small font
+      { repeatCell: { range: { sheetId:sid, startRowIndex:2, endRowIndex:500, startColumnIndex:0, endColumnIndex:1 }, cell: { userEnteredFormat: { textFormat: { bold:true, fontSize:9, foregroundColorStyle: { rgbColor: s.color } }, verticalAlignment:'TOP' } }, fields:'userEnteredFormat(textFormat,verticalAlignment)' } },
+      // Col B: wrap, top-align
+      { repeatCell: { range: { sheetId:sid, startRowIndex:0, endRowIndex:500, startColumnIndex:1, endColumnIndex:2 }, cell: { userEnteredFormat: { wrapStrategy:'WRAP', verticalAlignment:'TOP' } }, fields:'userEnteredFormat(wrapStrategy,verticalAlignment)' } },
+      // Column widths: A=220, B=500
+      { updateDimensionProperties: { range: { sheetId:sid, dimension:'COLUMNS', startIndex:0, endIndex:1 }, properties:{ pixelSize:220 }, fields:'pixelSize' } },
+      { updateDimensionProperties: { range: { sheetId:sid, dimension:'COLUMNS', startIndex:1, endIndex:2 }, properties:{ pixelSize:500 }, fields:'pixelSize' } },
+    );
+  });
+
+  const fmtRes = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${id}:batchUpdate`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ requests: fmt })
+  });
+  if (!fmtRes.ok) console.warn('Sheets format failed:', (await fmtRes.json().catch(()=>({}))).error?.message);
+
+  window.open(`https://docs.google.com/spreadsheets/d/${id}/edit`, '_blank');
 }
 
 /* ── Brief polish — tighten for at-a-glance consumption ── */
