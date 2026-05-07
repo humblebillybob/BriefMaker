@@ -1443,10 +1443,17 @@ footer {
   padding: 16px 18px;
   flex: 1;
   min-height: 100px;
+  max-height: 420px;
+  overflow-y: auto;
   font-size: 13.5px;
   line-height: 1.65;
   color: var(--text-secondary, var(--muted));
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
 }
+.creative-card-body::-webkit-scrollbar { width: 5px; }
+.creative-card-body::-webkit-scrollbar-track { background: transparent; }
+.creative-card-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
 .creative-card-body.draft-empty {
   display: flex;

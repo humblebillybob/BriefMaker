@@ -1308,6 +1308,52 @@ function renderDraftBody(assetKey, data) {
   }
 }
 
+// Returns the complete <table> block HTML for one asset — used by both exports
+function _assetDocBlock(def, draft, color, tint) {
+  let out = `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">
+<tr><td style="background:${tint};border-top:4px solid ${color};padding:16px 20px;">
+<table width="100%" cellpadding="0" cellspacing="0"><tr>
+<td style="width:32px;height:32px;background:${color};border-radius:8px;text-align:center;vertical-align:middle;font-size:16px;">${def.icon}</td>
+<td style="padding-left:12px;"><h2 style="font-size:16px;font-weight:700;color:#1a1a2e;margin:0;padding:0;">${escHtml(def.key)}</h2></td>
+</tr></table>
+</td></tr>
+<tr><td style="padding:16px 20px;background:#ffffff;">`;
+
+  function docSec(label, content) {
+    if (!content) return '';
+    const text = Array.isArray(content) ? content.join('\n') : String(content);
+    if (!text.trim()) return '';
+    return `<p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;">${escHtml(label)}</p>
+<p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:10px 12px;border-left:3px solid ${color};border-radius:4px;">${escHtml(text)}</p>`;
+  }
+  function docItem(label, content) {
+    if (!content) return '';
+    const text = Array.isArray(content) ? content.join('\n') : String(content);
+    if (!text.trim()) return '';
+    return `<h3 style="font-size:13px;font-weight:700;color:#333;margin:16px 0 4px;padding:0;">${escHtml(label)}</h3>
+<p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:10px 12px;border-left:3px solid ${color};border-radius:4px;">${escHtml(text)}</p>`;
+  }
+
+  try {
+    if (draft.editedText) {
+      out += `<p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:12px 14px;border-left:3px solid ${color};border-radius:4px;">${escHtml(draft.editedText)}</p>`;
+      return out + `</td></tr></table>`;
+    }
+    const d = draft.data;
+    if (d.emails)   d.emails.forEach((e,i) => { out += docItem(`Email ${i+1}${e.subject?' — '+e.subject:''}`, [e.preview?'Preview: '+e.preview:'',e.headline?'Headline: '+e.headline:'',e.body||'',e.cta?'CTA: '+e.cta:'',e.visual_direction?'Visual: '+e.visual_direction:''].filter(Boolean).join('\n')); });
+    else if (d.ads)     d.ads.forEach((a,i) => { out += docItem(`Ad ${i+1}`, [a.primary_text,a.headline,a.description,a.cta?'CTA: '+a.cta:'',a.visual_direction?'Visual: '+a.visual_direction:''].filter(Boolean).join('\n')); });
+    else if (d.banners) d.banners.forEach(b => { out += docItem(b.size||'Banner', [b.headline,b.subhead,b.cta?'CTA: '+b.cta:'',b.visual_concept?'Visual: '+b.visual_concept+(b.color_direction?' — '+b.color_direction:''):''].filter(Boolean).join('\n')); });
+    else if (d.scenes)  { out += docSec('Visual Concept', d.overall_visual_concept); out += docSec('Music Mood', d.music_mood); d.scenes.forEach(s=>{ out += docItem(`${s.name||''} (${s.duration||''})`, [s.script,s.visual_direction?'Visual: '+s.visual_direction:'',s.on_screen_text?'On screen: '+s.on_screen_text:''].filter(Boolean).join('\n')); }); }
+    else if (d.videos)  d.videos.forEach((v,i) => { out += docItem(`Video ${i+1}`, ['Hook: '+v.hook,v.core,'CTA: '+v.cta,v.visual_direction?'Visual: '+v.visual_direction+(v.editing_style?' | Edit: '+v.editing_style:''):''].filter(Boolean).join('\n')); });
+    else if (d.slides)  { out += docSec('Title & Tagline',[d.title,d.tagline].filter(Boolean).join('\n')); out += docSec('Opening Hook',d.opening_hook); d.slides.forEach((s,i)=>{ out += docItem(`Slide ${i+1}: ${s.title||''}`, (s.notes||[]).join('\n')); }); out += docSec('Closing CTA',d.closing_cta); out += docSec('Visual Theme',d.visual_theme); }
+    else { Object.entries(d).forEach(([k,v])=>{ if(typeof v==='string'&&v.trim()) out+=docSec(k.replace(/_/g,' '),v); else if(Array.isArray(v)&&v.every(x=>typeof x==='string')) out+=docSec(k.replace(/_/g,' '),v.join('\n')); else if(Array.isArray(v)&&v.length) out+=docSec(k.replace(/_/g,' '),v.map(x=>typeof x==='string'?x:JSON.stringify(x)).join('\n')); }); }
+  } catch(e) {
+    out += `<p style="font-size:12px;color:#888;">Error rendering draft.</p>`;
+  }
+
+  return out + `</td></tr></table>`;
+}
+
 function buildCreativesDocHtml(s1, drafts) {
   const COLORS  = ['#b89af5','#70a5f9','#3dd8e8','#4ade95','#fbbf50','#fb7185'];
   const TINTS   = ['#f6f3fe','#eef4fe','#e8fafc','#e9fbf2','#fef7ea','#feeef0'];
@@ -1321,65 +1367,10 @@ function buildCreativesDocHtml(s1, drafts) {
   ASSET_DEFS.forEach((def, idx) => {
     const draft = drafts[def.key];
     if (!draft || draft.status !== 'done') return;
-    const color = COLORS[idx % COLORS.length];
-    const tint  = TINTS[idx % TINTS.length];
-
-    html += `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;">
-<tr><td style="background:${tint};border-top:4px solid ${color};padding:16px 20px;">
-<table width="100%" cellpadding="0" cellspacing="0"><tr>
-<td style="width:32px;height:32px;background:${color};border-radius:8px;text-align:center;vertical-align:middle;font-size:16px;">${def.icon}</td>
-<td style="padding-left:12px;"><h2 style="font-size:16px;font-weight:700;color:#1a1a2e;margin:0;padding:0;">${escHtml(def.key)}</h2></td>
-</tr></table>
-</td></tr>
-<tr><td style="padding:16px 20px;background:#ffffff;">`;
-
-    // Render draft data for Docs — attr-level labels use <p>, item-level use <h3>
-    function docSec(label, content) {
-      if (!content) return '';
-      const text = Array.isArray(content) ? content.join('\n') : String(content);
-      if (!text.trim()) return '';
-      return `<p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;">${escHtml(label)}</p>
-<p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:10px 12px;border-left:3px solid ${color};border-radius:4px;">${escHtml(text)}</p>`;
-    }
-    function docItem(label, content) {
-      if (!content) return '';
-      const text = Array.isArray(content) ? content.join('\n') : String(content);
-      if (!text.trim()) return '';
-      return `<h3 style="font-size:13px;font-weight:700;color:#333;margin:16px 0 4px;padding:0;">${escHtml(label)}</h3>
-<p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:10px 12px;border-left:3px solid ${color};border-radius:4px;">${escHtml(text)}</p>`;
-    }
-
-    try {
-      // If user has a hand-edited version, use that directly
-      if (draft.editedText) {
-        html += `<p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:12px 14px;border-left:3px solid ${color};border-radius:4px;">${escHtml(draft.editedText)}</p>`;
-        html += `</td></tr></table>`;
-        return;
-      }
-      const d = draft.data;
-      // Use a simplified text rendering for each asset type
-      if (d.emails)   d.emails.forEach((e,i) => { html += docItem(`Email ${i+1}${e.subject ? ' — ' + e.subject : ''}`, [e.preview?'Preview: '+e.preview:'', e.headline?'Headline: '+e.headline:'', e.body||'', e.cta?'CTA: '+e.cta:'', e.visual_direction?'Visual: '+e.visual_direction:''].filter(Boolean).join('\n')); });
-      else if (d.ads)   d.ads.forEach((a,i) => { html += docItem(`Ad ${i+1}`, [a.primary_text,a.headline,a.description,a.cta?'CTA: '+a.cta:'',a.visual_direction?'Visual: '+a.visual_direction:''].filter(Boolean).join('\n')); });
-      else if (d.banners) d.banners.forEach(b => { html += docItem(b.size||'Banner', [b.headline,b.subhead,b.cta?'CTA: '+b.cta:'',b.visual_concept?'Visual: '+b.visual_concept+(b.color_direction?' — '+b.color_direction:''):''].filter(Boolean).join('\n')); });
-      else if (d.scenes) { html += docSec('Visual Concept', d.overall_visual_concept); html += docSec('Music Mood', d.music_mood); d.scenes.forEach(s=>{ html += docItem(`${s.name||''} (${s.duration||''})`, [s.script,s.visual_direction?'Visual: '+s.visual_direction:'',s.on_screen_text?'On screen: '+s.on_screen_text:''].filter(Boolean).join('\n')); }); }
-      else if (d.videos) d.videos.forEach((v,i) => { html += docItem(`Video ${i+1}`, ['Hook: '+v.hook, v.core, 'CTA: '+v.cta, v.visual_direction?'Visual: '+v.visual_direction+(v.editing_style?' | Edit: '+v.editing_style:''):''].filter(Boolean).join('\n')); });
-      else if (d.slides) { html += docSec('Title & Tagline', [d.title, d.tagline].filter(Boolean).join('\n')); html += docSec('Opening Hook', d.opening_hook); d.slides.forEach((s,i)=>{ html += docItem(`Slide ${i+1}: ${s.title||''}`, (s.notes||[]).join('\n')); }); html += docSec('Closing CTA', d.closing_cta); html += docSec('Visual Theme', d.visual_theme); }
-      else {
-        Object.entries(d).forEach(([k, v]) => {
-          if (typeof v === 'string' && v.trim()) html += docSec(k.replace(/_/g,' '), v);
-          else if (Array.isArray(v) && v.every(x=>typeof x==='string')) html += docSec(k.replace(/_/g,' '), v.join('\n'));
-          else if (Array.isArray(v) && v.length) html += docSec(k.replace(/_/g,' '), v.map(x=>typeof x==='string'?x:JSON.stringify(x)).join('\n'));
-        });
-      }
-    } catch(e) {
-      html += `<p style="font-size:12px;color:#888;">Error rendering draft.</p>`;
-    }
-
-    html += `</td></tr></table>`;
+    html += _assetDocBlock(def, draft, COLORS[idx % COLORS.length], TINTS[idx % TINTS.length]);
   });
 
-  html += `</body></html>`;
-  return html;
+  return html + `</body></html>`;
 }
 
 async function refineAsset(assetKey, currentData, editedText, instruction, ctx) {
@@ -1396,6 +1387,24 @@ Keep all keys present; only modify what the instruction targets.`;
 async function openCreativesInGoogleDocs(s1, drafts) {
   const name = (s1.campaign_name || 'Campaign') + ' — Creative Drafts';
   const file = await _driveUpload(name, 'application/vnd.google-apps.document', 'text/html', buildCreativesDocHtml(s1, drafts));
+  window.open(`https://docs.google.com/document/d/${file.id}/edit`, '_blank');
+}
+
+async function openSingleAssetInGoogleDocs(s1, def, draft) {
+  const COLORS = ['#b89af5','#70a5f9','#3dd8e8','#4ade95','#fbbf50','#fb7185'];
+  const TINTS  = ['#f6f3fe','#eef4fe','#e8fafc','#e9fbf2','#fef7ea','#feeef0'];
+  const idx    = ASSET_DEFS.findIndex(d => d.key === def.key);
+  const color  = COLORS[idx % COLORS.length];
+  const tint   = TINTS[idx % TINTS.length];
+  const campName  = s1.campaign_name || 'Campaign';
+  const generated = new Date().toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'});
+  const docHtml = `<html><body style="font-family:Arial,sans-serif;color:#1a1a2e;max-width:900px;margin:0 auto;padding:32px;">
+<p style="font-size:11px;color:#888;margin-bottom:4px;">${escHtml(def.key)} — Generated ${generated}</p>
+<h1 style="font-size:24px;font-weight:900;margin:0 0 24px;">${escHtml(campName)} — ${escHtml(def.key)}</h1>
+${_assetDocBlock(def, draft, color, tint)}
+</body></html>`;
+  const name = `${campName} — ${def.key}`;
+  const file = await _driveUpload(name, 'application/vnd.google-apps.document', 'text/html', docHtml);
   window.open(`https://docs.google.com/document/d/${file.id}/edit`, '_blank');
 }
 
