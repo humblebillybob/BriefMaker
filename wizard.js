@@ -598,10 +598,19 @@ function buildBriefHtml(s1, s2, s3, s4, s5, s6) {
     '<em>Optimization</em> Framework',
     'Reporting &amp; <em>Iteration</em>',
   ];
+  // Plain text versions for native Docs heading tags (TOC sidebar)
+  const PLAIN_TITLES = [
+    'Strategy & Planning',
+    'Creative Development',
+    'Pre-Launch Setup',
+    'Launch & Activation',
+    'Optimization Framework',
+    'Reporting & Iteration',
+  ];
 
   // Factory: returns {f, p, r2, wrap} scoped to this section's color
   function makeSec(i) {
-    const color = COLORS[i], tint = TINTS[i], num = String(i+1).padStart(2,'0'), title = TITLES[i];
+    const color = COLORS[i], tint = TINTS[i], num = String(i+1).padStart(2,'0'), title = TITLES[i], plainTitle = PLAIN_TITLES[i];
     const lbl = `font-size:9px;font-weight:700;color:${color};text-transform:uppercase;letter-spacing:.12em;margin:0 0 4px;font-family:Arial,sans-serif;`;
     const val = `font-size:13px;color:#111;line-height:1.65;margin:0;font-family:Arial,sans-serif;`;
     const fieldTd = `padding:10px 18px 12px;border-left:3px solid ${color};border-top:1px solid #f0f0f0;vertical-align:top;`;
@@ -629,7 +638,7 @@ function buildBriefHtml(s1, s2, s3, s4, s5, s6) {
         `<tr><td colspan="2" style="background:${tint};padding:10px 18px;">` +
         `<table cellpadding="0" cellspacing="0"><tr>` +
         `<td style="width:28px;height:28px;border:2px solid ${color};text-align:center;vertical-align:middle;font-size:10px;font-weight:700;color:${color};font-family:Arial,sans-serif;">${num}</td>` +
-        `<td style="padding-left:10px;font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#111;">${title}</td>` +
+        `<td style="padding-left:10px;"><h2 style="font-family:Georgia,'Times New Roman',serif;font-size:17px;color:#111;font-weight:400;margin:0;padding:0;">${plainTitle}</h2></td>` +
         `</tr></table></td></tr>${rows}</table>`;
     }
     return { f, p, r2, wrap };
@@ -1319,12 +1328,12 @@ function buildCreativesDocHtml(s1, drafts) {
 <tr><td style="background:${tint};border-top:4px solid ${color};padding:16px 20px;">
 <table width="100%" cellpadding="0" cellspacing="0"><tr>
 <td style="width:32px;height:32px;background:${color};border-radius:8px;text-align:center;vertical-align:middle;font-size:16px;">${def.icon}</td>
-<td style="padding-left:12px;font-size:16px;font-weight:700;color:#1a1a2e;">${escHtml(def.key)}</td>
+<td style="padding-left:12px;"><h2 style="font-size:16px;font-weight:700;color:#1a1a2e;margin:0;padding:0;">${escHtml(def.key)}</h2></td>
 </tr></table>
 </td></tr>
 <tr><td style="padding:16px 20px;background:#ffffff;">`;
 
-    // Render draft data as simple paragraphs for Docs
+    // Render draft data for Docs — attr-level labels use <p>, item-level use <h3>
     function docSec(label, content) {
       if (!content) return '';
       const text = Array.isArray(content) ? content.join('\n') : String(content);
@@ -1332,16 +1341,23 @@ function buildCreativesDocHtml(s1, drafts) {
       return `<p style="margin:0 0 4px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#888;">${escHtml(label)}</p>
 <p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:10px 12px;border-left:3px solid ${color};border-radius:4px;">${escHtml(text)}</p>`;
     }
+    function docItem(label, content) {
+      if (!content) return '';
+      const text = Array.isArray(content) ? content.join('\n') : String(content);
+      if (!text.trim()) return '';
+      return `<h3 style="font-size:13px;font-weight:700;color:#333;margin:16px 0 4px;padding:0;">${escHtml(label)}</h3>
+<p style="margin:0 0 16px;font-size:13px;line-height:1.6;white-space:pre-wrap;background:#f8f8fc;padding:10px 12px;border-left:3px solid ${color};border-radius:4px;">${escHtml(text)}</p>`;
+    }
 
     try {
       const d = draft.data;
       // Use a simplified text rendering for each asset type
-      if (d.emails)   d.emails.forEach((e,i) => { html += docSec(`Email ${i+1} — ${e.subject||''}`, [e.preview?'Preview: '+e.preview:'', e.headline?'Headline: '+e.headline:'', e.body||'', e.cta?'CTA: '+e.cta:'', e.visual_direction?'Visual: '+e.visual_direction:''].filter(Boolean).join('\n')); });
-      else if (d.ads)   d.ads.forEach((a,i) => { html += docSec(`Ad ${i+1}`, [a.primary_text,a.headline,a.description,a.cta?'CTA: '+a.cta:'',a.visual_direction?'Visual: '+a.visual_direction:''].filter(Boolean).join('\n')); });
-      else if (d.banners) d.banners.forEach(b => { html += docSec(b.size||'Banner', [b.headline,b.subhead,b.cta?'CTA: '+b.cta:'',b.visual_concept?'Visual: '+b.visual_concept+(b.color_direction?' — '+b.color_direction:''):''].filter(Boolean).join('\n')); });
-      else if (d.scenes) { html += docSec('Visual Concept', d.overall_visual_concept); html += docSec('Music Mood', d.music_mood); d.scenes.forEach(s=>{ html += docSec(`${s.name||''} (${s.duration||''})`, [s.script,s.visual_direction?'Visual: '+s.visual_direction:'',s.on_screen_text?'On screen: '+s.on_screen_text:''].filter(Boolean).join('\n')); }); }
-      else if (d.videos) d.videos.forEach((v,i) => { html += docSec(`Video ${i+1}`, ['Hook: '+v.hook, v.core, 'CTA: '+v.cta, v.visual_direction?'Visual: '+v.visual_direction+(v.editing_style?' | Edit: '+v.editing_style:''):''].filter(Boolean).join('\n')); });
-      else if (d.slides) { html += docSec('Title & Tagline', [d.title, d.tagline].filter(Boolean).join('\n')); html += docSec('Opening Hook', d.opening_hook); d.slides.forEach((s,i)=>{ html += docSec(`Slide ${i+1}: ${s.title||''}`, (s.notes||[]).join('\n')); }); html += docSec('Closing CTA', d.closing_cta); html += docSec('Visual Theme', d.visual_theme); }
+      if (d.emails)   d.emails.forEach((e,i) => { html += docItem(`Email ${i+1}${e.subject ? ' — ' + e.subject : ''}`, [e.preview?'Preview: '+e.preview:'', e.headline?'Headline: '+e.headline:'', e.body||'', e.cta?'CTA: '+e.cta:'', e.visual_direction?'Visual: '+e.visual_direction:''].filter(Boolean).join('\n')); });
+      else if (d.ads)   d.ads.forEach((a,i) => { html += docItem(`Ad ${i+1}`, [a.primary_text,a.headline,a.description,a.cta?'CTA: '+a.cta:'',a.visual_direction?'Visual: '+a.visual_direction:''].filter(Boolean).join('\n')); });
+      else if (d.banners) d.banners.forEach(b => { html += docItem(b.size||'Banner', [b.headline,b.subhead,b.cta?'CTA: '+b.cta:'',b.visual_concept?'Visual: '+b.visual_concept+(b.color_direction?' — '+b.color_direction:''):''].filter(Boolean).join('\n')); });
+      else if (d.scenes) { html += docSec('Visual Concept', d.overall_visual_concept); html += docSec('Music Mood', d.music_mood); d.scenes.forEach(s=>{ html += docItem(`${s.name||''} (${s.duration||''})`, [s.script,s.visual_direction?'Visual: '+s.visual_direction:'',s.on_screen_text?'On screen: '+s.on_screen_text:''].filter(Boolean).join('\n')); }); }
+      else if (d.videos) d.videos.forEach((v,i) => { html += docItem(`Video ${i+1}`, ['Hook: '+v.hook, v.core, 'CTA: '+v.cta, v.visual_direction?'Visual: '+v.visual_direction+(v.editing_style?' | Edit: '+v.editing_style:''):''].filter(Boolean).join('\n')); });
+      else if (d.slides) { html += docSec('Title & Tagline', [d.title, d.tagline].filter(Boolean).join('\n')); html += docSec('Opening Hook', d.opening_hook); d.slides.forEach((s,i)=>{ html += docItem(`Slide ${i+1}: ${s.title||''}`, (s.notes||[]).join('\n')); }); html += docSec('Closing CTA', d.closing_cta); html += docSec('Visual Theme', d.visual_theme); }
       else {
         Object.entries(d).forEach(([k, v]) => {
           if (typeof v === 'string' && v.trim()) html += docSec(k.replace(/_/g,' '), v);
